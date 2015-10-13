@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Torsten Krause.
+ * Copyright (c) 2015 Torsten Krause, Markenwerk GmbH.
  * 
  * This file is part of 'A DKIM library for JavaMail', hereafter
  * called 'this library', identified by the following coordinates:
