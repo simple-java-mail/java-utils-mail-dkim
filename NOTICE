@@ -1,0 +1,12 @@
+This file is part of 'A DKIM library for JavaMail', hereafter
+called 'this library', identified by the following coordinates:
+
+   groupID: net.markenwerk
+   artifactId: utils-mail-dkim
+
+The initial version of this library is based on the a project called
+'DKIM for JavaMail' (http://sourceforge.net/projects/dkim-javamail/).
+
+See the CHANGES file in this directory for a rough overview of the changes made
+to 'DKIM for JavaMail'. Keep and extend this file if you want to create a
+modified version of this library or base a new project on this library.
