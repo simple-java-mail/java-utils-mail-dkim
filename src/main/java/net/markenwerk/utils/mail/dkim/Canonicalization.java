@@ -47,63 +47,54 @@ package net.markenwerk.utils.mail.dkim;
 
 import java.io.IOException;
 
-/*
- * Provides Simple and Relaxed Canonicalization according to DKIM RFC 4871.
+/**
+ * Provides 'simple' and 'relaxed' canonicalization according to RFC 4871.
  * 
- * @author Florian Sager, http://www.agitos.de, 22.11.2008
+ * @author Torsten Krause (tk at markenwerk dot net)
+ * @author Florian Sager
+ * @since 1.0.0
  */
+public enum Canonicalization {
 
-public class Canonicalization {
-	
-	public static Canonicalization SIMPLE = new Canonicalization() {
-		
-		public String getType() {
-			
-			return "simple";
-		}
-		
+	SIMPLE {
+
 		public String canonicalizeHeader(String name, String value) {
-			
-			return name+":"+value;
+
+			return name + ":" + value;
 		}
-		
+
 		public String canonicalizeBody(String body) throws IOException {
 
-			if (body == null || "".equals(body) ) {
+			if (body == null || "".equals(body)) {
 				return "\r\n";
 			}
 
 			// The body must end with \r\n
-			if (!"\r\n".equals(body.substring(body.length()-2, body.length()))) {
-				return body+"\r\n";
+			if (!"\r\n".equals(body.substring(body.length() - 2, body.length()))) {
+				return body + "\r\n";
 			}
 
 			// Remove trailing empty lines ...
-			while ("\r\n\r\n".equals(body.substring(body.length()-4, body.length()))) {
-				body = body.substring(0, body.length()-2);
+			while ("\r\n\r\n".equals(body.substring(body.length() - 4, body.length()))) {
+				body = body.substring(0, body.length() - 2);
 			}
 
 			return body;
 		}
-	};
-	
-	public static Canonicalization RELAXED = new Canonicalization() {
+	},
 
-		public String getType() {
-			
-			return "relaxed";
-		}
-		
+	RELAXED {
+
 		public String canonicalizeHeader(String name, String value) {
-			
+
 			name = name.trim().toLowerCase();
 			value = value.replaceAll("\\s+", " ").trim();
-			return name+":"+value;
+			return name + ":" + value;
 		}
-		
+
 		public String canonicalizeBody(String body) throws IOException {
-			
-			if (body == null || "".equals(body) ) {
+
+			if (body == null || "".equals(body)) {
 				return "\r\n";
 			}
 
@@ -111,30 +102,24 @@ public class Canonicalization {
 			body = body.replaceAll(" \r\n", "\r\n");
 
 			// The body must end with \r\n
-			if (!"\r\n".equals(body.substring(body.length()-2, body.length()))) {
-				return body+"\r\n";
+			if (!"\r\n".equals(body.substring(body.length() - 2, body.length()))) {
+				return body + "\r\n";
 			}
 
 			// Remove trailing empty lines ...
-			while ("\r\n\r\n".equals(body.substring(body.length()-4, body.length()))) {
-				body = body.substring(0, body.length()-2);
+			while ("\r\n\r\n".equals(body.substring(body.length() - 4, body.length()))) {
+				body = body.substring(0, body.length() - 2);
 			}
 
 			return body;
 		}
 	};
 
-	public Canonicalization() { }
-	
-	public String getType() {
-		return "unknown";
+	public final String getType() {
+		return name().toLowerCase();
 	}
-	
-	public String canonicalizeHeader(String name, String value) {
-		return null;
-	}
-	
-	public String canonicalizeBody(String body) throws IOException {
-		return null;
-	}
+
+	public abstract String canonicalizeHeader(String name, String value);
+
+	public abstract String canonicalizeBody(String body) throws IOException;
 }
