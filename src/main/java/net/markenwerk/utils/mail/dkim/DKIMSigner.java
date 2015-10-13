@@ -98,7 +98,7 @@ public class DKIMSigner {
 			"Resent-Cc","Resent-Date","Resent-To","Reply-To","References","Resent-Message-ID",
 			"Resent-From","Sender","Subject","To"};
 
-	private SigningAlgorithm signingAlgorithm = SigningAlgorithm.SHA256withRSA; // use rsa-sha256 by default, see RFC 4871
+	private SigningAlgorithm signingAlgorithm = SigningAlgorithm.SHA256_WITH_RSA;
 	private Signature signatureService;
 	private MessageDigest messageDigest;
 	private String signingDomain;
@@ -243,15 +243,15 @@ public class DKIMSigner {
 	public void setSigningAlgorithm(SigningAlgorithm signingAlgorithm) throws DKIMSignerException {
 
 		try {
-			this.messageDigest = MessageDigest.getInstance(signingAlgorithm.getJavaHashNotation());
+			this.messageDigest = MessageDigest.getInstance(signingAlgorithm.getHashNotation());
 		} catch (NoSuchAlgorithmException nsae) {
-			throw new DKIMSignerException("The hashing algorithm "+signingAlgorithm.getJavaHashNotation()+" is not known by the JVM", nsae);
+			throw new DKIMSignerException("The hashing algorithm "+signingAlgorithm.getHashNotation()+" is not known by the JVM", nsae);
 		}
 		
 		try {
-			this.signatureService = Signature.getInstance(signingAlgorithm.getJavaSecNotation());
+			this.signatureService = Signature.getInstance(signingAlgorithm.getJavaNotation());
 		} catch (NoSuchAlgorithmException nsae) {
-			throw new DKIMSignerException("The signing algorithm "+signingAlgorithm.getJavaSecNotation()+" is not known by the JVM", nsae);
+			throw new DKIMSignerException("The signing algorithm "+signingAlgorithm.getJavaNotation()+" is not known by the JVM", nsae);
 		}
 		
 		try {

@@ -45,37 +45,40 @@
  */
 package net.markenwerk.utils.mail.dkim;
 
-/*
- * Allowed signing algorithms by DKIM RFC 4871 with translation to different Java notations
+/**
+ * Allowed signing algorithms by RFC 4871 with translation to different Java
+ * notations.
  * 
- * @author Florian Sager, http://www.agitos.de, 22.11.2008
+ * @author Torsten Krause (tk at markenwerk dot net)
+ * @author Florian Sager
+ * @since 1.0.0
  */
+public enum SigningAlgorithm {
 
-public class SigningAlgorithm {
-	
-	public static SigningAlgorithm SHA256withRSA = new SigningAlgorithm("rsa-sha256", "SHA256withRSA", "sha-256");
-	public static SigningAlgorithm SHA1withRSA = new SigningAlgorithm("rsa-sha1", "SHA1withRSA", "sha-1");
+	SHA256_WITH_RSA("rsa-sha256", "SHA256withRSA", "sha-256"),
 
-	private String rfc4871Notation;
-	private String javaSecNotation;
-	private String javaHashNotation;
+	SHA1_WITH_RSA("rsa-sha1", "SHA1withRSA", "sha-1");
 
-	// 1. argument: RFC 4871 format, 2. argument: java representation, 3. argument: java hashing digest
-	public SigningAlgorithm(String rfc4871Notation, String javaSecNotation, String javaHashNotation) {
+	private final String rfc4871Notation;
+	private final String javaNotation;
+	private final String hashNotation;
+
+	private SigningAlgorithm(String rfc4871Notation, String javaNotation, String hashNotation) {
 		this.rfc4871Notation = rfc4871Notation;
-		this.javaSecNotation = javaSecNotation;
-		this.javaHashNotation = javaHashNotation;
-	}
-
-	public String getJavaHashNotation() {
-		return javaHashNotation;
-	}
-
-	public String getJavaSecNotation() {
-		return javaSecNotation;
+		this.javaNotation = javaNotation;
+		this.hashNotation = hashNotation;
 	}
 
 	public String getRfc4871Notation() {
 		return rfc4871Notation;
 	}
+
+	public String getJavaNotation() {
+		return javaNotation;
+	}
+
+	public String getHashNotation() {
+		return hashNotation;
+	}
+
 }

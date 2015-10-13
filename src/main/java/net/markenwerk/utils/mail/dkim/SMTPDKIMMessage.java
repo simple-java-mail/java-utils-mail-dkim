@@ -62,8 +62,9 @@ import com.sun.mail.util.LineOutputStream;
 /*
  * Extension of SMTPMessage for the inclusion of a DKIM signature.
  * 
- * @author Florian Sager, http://www.agitos.de, 22.11.2008
- */
+ * @author Torsten Krause (tk at markenwerk dot net)
+ * @author Florian Sager
+ * @since 1.0.0 */
 
 public class SMTPDKIMMessage extends SMTPMessage {
 
