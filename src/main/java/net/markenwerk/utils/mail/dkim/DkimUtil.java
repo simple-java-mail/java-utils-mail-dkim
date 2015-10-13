@@ -127,7 +127,7 @@ public final class DkimUtil {
 		return encoded;
 	}
 
-	public boolean checkDNSForPublickey(String signingDomain, String selector) throws DkimException {
+	public boolean checkDnsForPublickey(String signingDomain, String selector) throws DkimException {
 
 		String recordName = getRecordName(signingDomain, selector);
 		String value = getValueFromDns(recordName);
