@@ -76,13 +76,16 @@ public final class DkimUtil {
 	private DkimUtil() {
 	}
 
-//	protected static String[] splitHeader(String header) throws DkimException {
-//		int colonPosition = header.indexOf(':');
-//		if (-1 == colonPosition) {
-//			throw new DkimException("The header string " + header + " is no valid RFC 822 header-line");
-//		}
-//		return new String[] { header.substring(0, colonPosition), header.substring(colonPosition + 1) };
-//	}
+	// protected static String[] splitHeader(String header) throws DkimException
+	// {
+	// int colonPosition = header.indexOf(':');
+	// if (-1 == colonPosition) {
+	// throw new DkimException("The header string " + header +
+	// " is no valid RFC 822 header-line");
+	// }
+	// return new String[] { header.substring(0, colonPosition),
+	// header.substring(colonPosition + 1) };
+	// }
 
 	protected static String concatArray(List<String> assureHeaders, String separator) {
 		StringBuffer buffer = new StringBuffer();
@@ -127,7 +130,7 @@ public final class DkimUtil {
 		return encoded;
 	}
 
-	public boolean checkDnsForPublickey(String signingDomain, String selector) throws DkimException {
+	public static boolean checkDnsForPublickey(String signingDomain, String selector) throws DkimException {
 
 		String recordName = getRecordName(signingDomain, selector);
 		String value = getValueFromDns(recordName);
@@ -162,11 +165,11 @@ public final class DkimUtil {
 		throw new DkimException("No public key available in " + recordName);
 	}
 
-	private String getRecordName(String signingDomain, String selector) {
+	private static String getRecordName(String signingDomain, String selector) {
 		return selector + "._domainkey." + signingDomain;
 	}
 
-	private String getValueFromDns(String recordName) {
+	private static String getValueFromDns(String recordName) {
 		try {
 			DirContext dnsContext = new InitialDirContext(getEnvironment());
 			Attributes attributes = dnsContext.getAttributes(recordName, new String[] { "TXT" });
@@ -188,7 +191,7 @@ public final class DkimUtil {
 		}
 	}
 
-	private Hashtable<String, String> getEnvironment() {
+	private static Hashtable<String, String> getEnvironment() {
 		Hashtable<String, String> environment = new Hashtable<String, String>();
 		environment.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
 		return environment;
