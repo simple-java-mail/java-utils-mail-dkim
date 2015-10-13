@@ -72,10 +72,10 @@ import com.sun.mail.util.QPEncoderStream;
 
 public class DKIMUtil {
 
-	protected static String[] splitHeader(String header) throws DKIMSignerException {
+	protected static String[] splitHeader(String header) throws DkimException {
 		int colonPos = header.indexOf(':');
 		if (colonPos==-1) {
-			throw new DKIMSignerException("The header string "+header+" is no valid RFC 822 header-line");
+			throw new DkimException("The header string "+header+" is no valid RFC 822 header-line");
 		}
 		return new String[]{header.substring(0, colonPos), header.substring(colonPos+1)};
 	}
@@ -123,7 +123,7 @@ public class DKIMUtil {
 		return encoded.replace("\r", ""); // Win --> FSTODO: select Encoder without line termination 
 	}
 
-	public boolean checkDNSForPublickey(String signingDomain, String selector) throws DKIMSignerException {
+	public boolean checkDNSForPublickey(String signingDomain, String selector) throws DkimException {
 
 		Hashtable<String, String> env = new Hashtable<String, String>();
         env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
@@ -137,18 +137,18 @@ public class DKIMUtil {
         	javax.naming.directory.Attribute txtrecord = attribs.get("txt");
         	
         	if (txtrecord == null) {
-        		throw new DKIMSignerException("There is no TXT record available for "+recordname);
+        		throw new DkimException("There is no TXT record available for "+recordname);
         	}
 
         	// "v=DKIM1; g=*; k=rsa; p=MIGfMA0G ..."
         	value = (String) txtrecord.get();
 
         } catch (NamingException ne) {
-        	throw new DKIMSignerException("Selector lookup failed", ne);
+        	throw new DkimException("Selector lookup failed", ne);
         }
         
         if (value == null) {
-        	throw new DKIMSignerException("Value of RR "+recordname+" couldn't be retrieved");
+        	throw new DkimException("Value of RR "+recordname+" couldn't be retrieved");
         }
 
         // try to read public key from RR
@@ -164,9 +164,9 @@ public class DKIMUtil {
 	        		PKCS8EncodedKeySpec pubSpec = new PKCS8EncodedKeySpec(tag.substring(2).getBytes());
 	        		RSAPrivateKey pubKey = (RSAPrivateKey) keyFactory.generatePublic(pubSpec);
         		} catch (NoSuchAlgorithmException nsae) {
-        			throw new DKIMSignerException("RSA algorithm not found by JVM");
+        			throw new DkimException("RSA algorithm not found by JVM");
         		} catch (InvalidKeySpecException ikse) {
-        			throw new DKIMSignerException("The public key "+tag+" in RR "+recordname+" couldn't be decoded.");
+        			throw new DkimException("The public key "+tag+" in RR "+recordname+" couldn't be decoded.");
         		}
         		
         		// FSTODO: create test signature with privKey and test validation with pubKey to check on a valid key pair
@@ -175,7 +175,7 @@ public class DKIMUtil {
         	}
 		}
 
-        throw new DKIMSignerException("No public key available in "+recordname);
+        throw new DkimException("No public key available in "+recordname);
 	}
 
 }

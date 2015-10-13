@@ -133,10 +133,10 @@ public class DKIMSigner {
 		initDKIMSigner(signingDomain, selector, privKey);
 	}
 
-	private void initDKIMSigner(String signingDomain, String selector, PrivateKey privkey) throws DKIMSignerException {
+	private void initDKIMSigner(String signingDomain, String selector, PrivateKey privkey) throws DkimException {
 
 		if (!DKIMUtil.isValidDomain(signingDomain)) {
-			throw new DKIMSignerException(signingDomain+" is an invalid signing domain");
+			throw new DkimException(signingDomain+" is an invalid signing domain");
 		}
 
 		this.signingDomain = signingDomain;
@@ -149,12 +149,12 @@ public class DKIMSigner {
 		return identity;
 	}
 
-	public void setIdentity(String identity) throws DKIMSignerException {
+	public void setIdentity(String identity) throws DkimException {
 
 		if (identity!=null) {
 			identity = identity.trim();
 			if (!identity.endsWith("@"+signingDomain) && !identity.endsWith("."+signingDomain)) {
-				throw new DKIMSignerException("The domain part of "+identity+" has to be "+signingDomain+" or its subdomain");
+				throw new DkimException("The domain part of "+identity+" has to be "+signingDomain+" or its subdomain");
 			}
 		}
 
@@ -165,7 +165,7 @@ public class DKIMSigner {
 		return bodyCanonicalization;
 	}
 
-	public void setBodyCanonicalization(Canonicalization bodyCanonicalization) throws DKIMSignerException {
+	public void setBodyCanonicalization(Canonicalization bodyCanonicalization) throws DkimException {
 		this.bodyCanonicalization = bodyCanonicalization;
 	}
 
@@ -173,7 +173,7 @@ public class DKIMSigner {
 		return headerCanonicalization;
 	}
 
-	public void setHeaderCanonicalization(Canonicalization headerCanonicalization) throws DKIMSignerException {
+	public void setHeaderCanonicalization(Canonicalization headerCanonicalization) throws DkimException {
 		this.headerCanonicalization = headerCanonicalization;
 	}
 
@@ -240,24 +240,24 @@ public class DKIMSigner {
 		return signingAlgorithm;
 	}
 
-	public void setSigningAlgorithm(SigningAlgorithm signingAlgorithm) throws DKIMSignerException {
+	public void setSigningAlgorithm(SigningAlgorithm signingAlgorithm) throws DkimException {
 
 		try {
 			this.messageDigest = MessageDigest.getInstance(signingAlgorithm.getHashNotation());
 		} catch (NoSuchAlgorithmException nsae) {
-			throw new DKIMSignerException("The hashing algorithm "+signingAlgorithm.getHashNotation()+" is not known by the JVM", nsae);
+			throw new DkimException("The hashing algorithm "+signingAlgorithm.getHashNotation()+" is not known by the JVM", nsae);
 		}
 		
 		try {
 			this.signatureService = Signature.getInstance(signingAlgorithm.getJavaNotation());
 		} catch (NoSuchAlgorithmException nsae) {
-			throw new DKIMSignerException("The signing algorithm "+signingAlgorithm.getJavaNotation()+" is not known by the JVM", nsae);
+			throw new DkimException("The signing algorithm "+signingAlgorithm.getJavaNotation()+" is not known by the JVM", nsae);
 		}
 		
 		try {
 			this.signatureService.initSign(privkey);
 		} catch (InvalidKeyException ike) {
-			throw new DKIMSignerException("The provided private key is invalid", ike);
+			throw new DkimException("The provided private key is invalid", ike);
 		}
 		
 		this.signingAlgorithm = signingAlgorithm;
@@ -330,7 +330,7 @@ public class DKIMSigner {
 		return buf.toString();
 	}
 
-	public String sign(SMTPDKIMMessage message) throws DKIMSignerException, MessagingException {
+	public String sign(SMTPDKIMMessage message) throws DkimException, MessagingException {
 
 		Map<String, String> dkimSignature = new LinkedHashMap<String, String>();
 		dkimSignature.put("v", "1");
@@ -369,7 +369,7 @@ public class DKIMSigner {
 		}
 
 		if (!assureHeaders.isEmpty()) {
-			throw new DKIMSignerException("Could not find the header fields "+DKIMUtil.concatArray(assureHeaders, ", ")+" for signing");
+			throw new DkimException("Could not find the header fields "+DKIMUtil.concatArray(assureHeaders, ", ")+" for signing");
 		}
 
 		dkimSignature.put("h", headerList.substring(0, headerList.length()-1));
@@ -386,14 +386,14 @@ public class DKIMSigner {
 		try { 
 			crlfos.write(body.getBytes()); 
 		} catch (IOException e) { 
-			throw new DKIMSignerException("The body conversion to MIME canonical CRLF line terminator failed", e); 
+			throw new DkimException("The body conversion to MIME canonical CRLF line terminator failed", e); 
 		} 
 		body = baos.toString(); 
 		
 		try {
 			body = this.bodyCanonicalization.canonicalizeBody(body);
 		} catch (IOException ioe) {
-			throw new DKIMSignerException("The body canonicalization failed", ioe);
+			throw new DkimException("The body canonicalization failed", ioe);
 		}
 
 		if (this.lengthParam) {
@@ -411,7 +411,7 @@ public class DKIMSigner {
 			signatureService.update(headerContent.append(this.headerCanonicalization.canonicalizeHeader(DKIMSIGNATUREHEADER, " "+serializedSignature)).toString().getBytes());
 			signedSignature = signatureService.sign();
 		} catch (SignatureException se) {
-			throw new DKIMSignerException("The signing operation by Java security failed", se);
+			throw new DkimException("The signing operation by Java security failed", se);
 		}
 
 		return DKIMSIGNATUREHEADER + ": " + serializedSignature+foldSignedSignature(DKIMUtil.base64Encode(signedSignature), 3);
