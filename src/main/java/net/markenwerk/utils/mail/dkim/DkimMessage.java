@@ -65,7 +65,7 @@ import com.sun.mail.smtp.SMTPMessage;
  * @author Florian Sager
  * @since 1.0.0
  */
-public class SMTPDKIMMessage extends SMTPMessage {
+public class DkimMessage extends SMTPMessage {
 
 	private static byte[] NL = { (byte) '\r', (byte) '\n' };
 
@@ -73,17 +73,17 @@ public class SMTPDKIMMessage extends SMTPMessage {
 
 	private String encodedBody;
 
-	public SMTPDKIMMessage(Session session, DKIMSigner signer) {
+	public DkimMessage(Session session, DKIMSigner signer) {
 		super(session);
 		this.signer = signer;
 	}
 
-	public SMTPDKIMMessage(MimeMessage message, DKIMSigner signer) throws MessagingException {
+	public DkimMessage(MimeMessage message, DKIMSigner signer) throws MessagingException {
 		super(message);
 		this.signer = signer;
 	}
 
-	public SMTPDKIMMessage(Session session, InputStream is, DKIMSigner signer) throws MessagingException {
+	public DkimMessage(Session session, InputStream is, DKIMSigner signer) throws MessagingException {
 		super(session, is);
 		this.signer = signer;
 	}

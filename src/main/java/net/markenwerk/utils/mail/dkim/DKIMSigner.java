@@ -330,7 +330,7 @@ public class DKIMSigner {
 		return buf.toString();
 	}
 
-	public String sign(SMTPDKIMMessage message) throws DkimException, MessagingException {
+	public String sign(DkimMessage message) throws DkimException, MessagingException {
 
 		Map<String, String> dkimSignature = new LinkedHashMap<String, String>();
 		dkimSignature.put("v", "1");
