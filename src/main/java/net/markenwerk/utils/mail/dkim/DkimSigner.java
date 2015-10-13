@@ -79,7 +79,7 @@ import com.sun.mail.util.CRLFOutputStream;
  * @author Florian Sager, http://www.agitos.de, 15.10.2008
  */
 
-public class DKIMSigner {
+public class DkimSigner {
 
 	private static String DKIMSIGNATUREHEADER = "DKIM-Signature";
 	private static int MAXHEADERLENGTH = 67;
@@ -110,11 +110,11 @@ public class DKIMSigner {
 	private Canonicalization bodyCanonicalization = Canonicalization.SIMPLE;
 	private PrivateKey privkey;
 
-	public DKIMSigner(String signingDomain, String selector, PrivateKey privkey) throws Exception {
+	public DkimSigner(String signingDomain, String selector, PrivateKey privkey) throws Exception {
 		initDKIMSigner(signingDomain, selector, privkey);
 	}
 
-	public DKIMSigner(String signingDomain, String selector, String privkeyFilename) throws Exception {
+	public DkimSigner(String signingDomain, String selector, String privkeyFilename) throws Exception {
 
 		File privKeyFile = new File(privkeyFilename);
 
@@ -135,7 +135,7 @@ public class DKIMSigner {
 
 	private void initDKIMSigner(String signingDomain, String selector, PrivateKey privkey) throws DkimException {
 
-		if (!DKIMUtil.isValidDomain(signingDomain)) {
+		if (!DkimUtil.isValidDomain(signingDomain)) {
 			throw new DkimException(signingDomain+" is an invalid signing domain");
 		}
 
@@ -343,7 +343,7 @@ public class DKIMSigner {
 
 		// set identity inside signature
 		if (identity!=null) {
-			dkimSignature.put("i", DKIMUtil.QuotedPrintable(identity));
+			dkimSignature.put("i", DkimUtil.QuotedPrintable(identity));
 		}
 
 		// process header
@@ -357,19 +357,19 @@ public class DKIMSigner {
 		Enumeration headerLines = message.getMatchingHeaderLines(defaultHeadersToSign);
 		while (headerLines.hasMoreElements()) {
 			String header = (String) headerLines.nextElement();
-			String[] headerParts = DKIMUtil.splitHeader(header);
+			String[] headerParts = DkimUtil.splitHeader(header);
 			headerList.append(headerParts[0]).append(":");
 			headerContent.append(this.headerCanonicalization.canonicalizeHeader(headerParts[0], headerParts[1])).append("\r\n");
 			assureHeaders.remove(headerParts[0]);
 
 			// add optional z= header list, DKIM-Quoted-Printable
 			if (this.zParam) {
-				zParamString.append(headerParts[0]).append(":").append(DKIMUtil.QuotedPrintable(headerParts[1].trim()).replace("|", "=7C")).append("|");
+				zParamString.append(headerParts[0]).append(":").append(DkimUtil.QuotedPrintable(headerParts[1].trim()).replace("|", "=7C")).append("|");
 			}
 		}
 
 		if (!assureHeaders.isEmpty()) {
-			throw new DkimException("Could not find the header fields "+DKIMUtil.concatArray(assureHeaders, ", ")+" for signing");
+			throw new DkimException("Could not find the header fields "+DkimUtil.concatArray(assureHeaders, ", ")+" for signing");
 		}
 
 		dkimSignature.put("h", headerList.substring(0, headerList.length()-1));
@@ -401,7 +401,7 @@ public class DKIMSigner {
 		}
 
 		// calculate and encode body hash
-		dkimSignature.put("bh", DKIMUtil.base64Encode(this.messageDigest.digest(body.getBytes())));
+		dkimSignature.put("bh", DkimUtil.base64Encode(this.messageDigest.digest(body.getBytes())));
 
 		// create signature
 		String serializedSignature = serializeDKIMSignature(dkimSignature);
@@ -414,6 +414,6 @@ public class DKIMSigner {
 			throw new DkimException("The signing operation by Java security failed", se);
 		}
 
-		return DKIMSIGNATUREHEADER + ": " + serializedSignature+foldSignedSignature(DKIMUtil.base64Encode(signedSignature), 3);
+		return DKIMSIGNATUREHEADER + ": " + serializedSignature+foldSignedSignature(DkimUtil.base64Encode(signedSignature), 3);
 	}
 }

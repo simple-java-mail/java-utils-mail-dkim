@@ -69,21 +69,21 @@ public class DkimMessage extends SMTPMessage {
 
 	private static byte[] NL = { (byte) '\r', (byte) '\n' };
 
-	private DKIMSigner signer;
+	private DkimSigner signer;
 
 	private String encodedBody;
 
-	public DkimMessage(Session session, DKIMSigner signer) {
+	public DkimMessage(Session session, DkimSigner signer) {
 		super(session);
 		this.signer = signer;
 	}
 
-	public DkimMessage(MimeMessage message, DKIMSigner signer) throws MessagingException {
+	public DkimMessage(MimeMessage message, DkimSigner signer) throws MessagingException {
 		super(message);
 		this.signer = signer;
 	}
 
-	public DkimMessage(Session session, InputStream is, DKIMSigner signer) throws MessagingException {
+	public DkimMessage(Session session, InputStream is, DkimSigner signer) throws MessagingException {
 		super(session, is);
 		this.signer = signer;
 	}

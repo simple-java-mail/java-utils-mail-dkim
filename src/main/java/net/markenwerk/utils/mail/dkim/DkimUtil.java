@@ -70,7 +70,7 @@ import com.sun.mail.util.QPEncoderStream;
  * @author Florian Sager, http://www.agitos.de, 22.11.2008
  */
 
-public class DKIMUtil {
+public class DkimUtil {
 
 	protected static String[] splitHeader(String header) throws DkimException {
 		int colonPos = header.indexOf(':');
