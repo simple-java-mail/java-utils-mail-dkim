@@ -62,86 +62,111 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import javax.mail.Header;
 import javax.mail.MessagingException;
 
 import com.sun.mail.util.CRLFOutputStream;
 
-
-/*
+/**
  * Main class providing a signature according to DKIM RFC 4871.
  * 
- * @author Florian Sager, http://www.agitos.de, 15.10.2008
+ * @author Torsten Krause (tk at markenwerk dot net)
+ * @author Florian Sager
+ * @since 1.0.0
  */
-
 public class DkimSigner {
 
-	private static String DKIMSIGNATUREHEADER = "DKIM-Signature";
-	private static int MAXHEADERLENGTH = 67;
+	private static final String DKIM_SIGNATUR_HEADER = "DKIM-Signature";
+	private static final int MAX_HEADER_LENGTH = 67;
 
-	private static ArrayList<String> minimumHeadersToSign = new ArrayList<String>();
+	private static final List<String> MIMIMUM_HEADERS_TO_SIGN = new ArrayList<String>(3);
+	private static final List<String> DEFAULT_HEADERS_TO_SIGN = new ArrayList<String>(28);
+
 	static {
-		minimumHeadersToSign.add("From");
-		minimumHeadersToSign.add("To");
-		minimumHeadersToSign.add("Subject");
+		MIMIMUM_HEADERS_TO_SIGN.add("From");
+		MIMIMUM_HEADERS_TO_SIGN.add("To");
+		MIMIMUM_HEADERS_TO_SIGN.add("Subject");
+
+		DEFAULT_HEADERS_TO_SIGN.addAll(MIMIMUM_HEADERS_TO_SIGN);
+		DEFAULT_HEADERS_TO_SIGN.add("Content-Description");
+		DEFAULT_HEADERS_TO_SIGN.add("Content-ID");
+		DEFAULT_HEADERS_TO_SIGN.add("Content-Type");
+		DEFAULT_HEADERS_TO_SIGN.add("Content-Transfer-Encoding");
+		DEFAULT_HEADERS_TO_SIGN.add("Cc");
+		DEFAULT_HEADERS_TO_SIGN.add("Date");
+		DEFAULT_HEADERS_TO_SIGN.add("In-Reply-To");
+		DEFAULT_HEADERS_TO_SIGN.add("List-Subscribe");
+		DEFAULT_HEADERS_TO_SIGN.add("List-Post");
+		DEFAULT_HEADERS_TO_SIGN.add("List-Owner");
+		DEFAULT_HEADERS_TO_SIGN.add("List-Id");
+		DEFAULT_HEADERS_TO_SIGN.add("List-Archive");
+		DEFAULT_HEADERS_TO_SIGN.add("List-Help");
+		DEFAULT_HEADERS_TO_SIGN.add("List-Unsubscribe");
+		DEFAULT_HEADERS_TO_SIGN.add("MIME-Version");
+		DEFAULT_HEADERS_TO_SIGN.add("Message-ID");
+		DEFAULT_HEADERS_TO_SIGN.add("Resent-Sender");
+		DEFAULT_HEADERS_TO_SIGN.add("Resent-Cc");
+		DEFAULT_HEADERS_TO_SIGN.add("Resent-Date");
+		DEFAULT_HEADERS_TO_SIGN.add("Resent-To");
+		DEFAULT_HEADERS_TO_SIGN.add("Reply-To");
+		DEFAULT_HEADERS_TO_SIGN.add("References");
+		DEFAULT_HEADERS_TO_SIGN.add("Resent-Message-ID");
+		DEFAULT_HEADERS_TO_SIGN.add("Resent-From");
+		DEFAULT_HEADERS_TO_SIGN.add("Sender");
 	}
-	
-	private String[] defaultHeadersToSign = new String[]{
-			"Content-Description","Content-ID","Content-Type","Content-Transfer-Encoding","Cc",
-			"Date","From","In-Reply-To","List-Subscribe","List-Post","List-Owner","List-Id",
-			"List-Archive","List-Help","List-Unsubscribe","MIME-Version","Message-ID","Resent-Sender",
-			"Resent-Cc","Resent-Date","Resent-To","Reply-To","References","Resent-Message-ID",
-			"Resent-From","Sender","Subject","To"};
+
+	private final Set<String> headersToSign = new HashSet<String>(DEFAULT_HEADERS_TO_SIGN);
 
 	private SigningAlgorithm signingAlgorithm = SigningAlgorithm.SHA256_WITH_RSA;
 	private Signature signatureService;
 	private MessageDigest messageDigest;
 	private String signingDomain;
 	private String selector;
-	private String identity = null;
-	private boolean lengthParam = false;
-	private boolean zParam = false;
+	private String identity;
+	private boolean lengthParam;
+	private boolean zParam;
 	private Canonicalization headerCanonicalization = Canonicalization.RELAXED;
 	private Canonicalization bodyCanonicalization = Canonicalization.SIMPLE;
-	private PrivateKey privkey;
+	private PrivateKey privatekey;
 
 	public DkimSigner(String signingDomain, String selector, PrivateKey privkey) throws Exception {
-		initDKIMSigner(signingDomain, selector, privkey);
+		initDkimSigner(signingDomain, selector, privkey);
 	}
 
-	public DkimSigner(String signingDomain, String selector, String privkeyFilename) throws Exception {
-
-		File privKeyFile = new File(privkeyFilename);
+	public DkimSigner(String signingDomain, String selector, String privateKeyFilename) throws Exception {
 
 		// read private key DER file
-        DataInputStream dis = new DataInputStream(new FileInputStream(privKeyFile));
-		byte[] privKeyBytes = new byte[(int) privKeyFile.length()];
-		dis.read(privKeyBytes);
-		dis.close();
-
-		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		File privateKeyFile = new File(privateKeyFilename);
+		DataInputStream in = new DataInputStream(new FileInputStream(privateKeyFile));
+		byte[] privKeyBytes = new byte[(int) privateKeyFile.length()];
+		in.read(privKeyBytes);
+		in.close();
 
 		// decode private key
+		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privKeyBytes);
 		RSAPrivateKey privKey = (RSAPrivateKey) keyFactory.generatePrivate(privSpec);
+		initDkimSigner(signingDomain, selector, privKey);
 
-		initDKIMSigner(signingDomain, selector, privKey);
 	}
 
-	private void initDKIMSigner(String signingDomain, String selector, PrivateKey privkey) throws DkimException {
+	private void initDkimSigner(String signingDomain, String selector, PrivateKey privkey) throws DkimException {
 
 		if (!DkimUtil.isValidDomain(signingDomain)) {
-			throw new DkimException(signingDomain+" is an invalid signing domain");
+			throw new DkimException(signingDomain + " is an invalid signing domain");
 		}
 
 		this.signingDomain = signingDomain;
 		this.selector = selector.trim();
-		this.privkey = privkey;
+		this.privatekey = privkey;
 		this.setSigningAlgorithm(this.signingAlgorithm);
 	}
 
@@ -150,14 +175,13 @@ public class DkimSigner {
 	}
 
 	public void setIdentity(String identity) throws DkimException {
-
-		if (identity!=null) {
+		if (null != identity) {
 			identity = identity.trim();
-			if (!identity.endsWith("@"+signingDomain) && !identity.endsWith("."+signingDomain)) {
-				throw new DkimException("The domain part of "+identity+" has to be "+signingDomain+" or its subdomain");
+			if (!(identity.endsWith("@" + signingDomain) || identity.endsWith("." + signingDomain))) {
+				throw new DkimException("The domain part of " + identity + " has to be " + signingDomain
+						+ " or a subdomain thereof");
 			}
 		}
-
 		this.identity = identity;
 	}
 
@@ -165,7 +189,7 @@ public class DkimSigner {
 		return bodyCanonicalization;
 	}
 
-	public void setBodyCanonicalization(Canonicalization bodyCanonicalization) throws DkimException {
+	public void setBodyCanonicalization(Canonicalization bodyCanonicalization) {
 		this.bodyCanonicalization = bodyCanonicalization;
 	}
 
@@ -173,57 +197,26 @@ public class DkimSigner {
 		return headerCanonicalization;
 	}
 
-	public void setHeaderCanonicalization(Canonicalization headerCanonicalization) throws DkimException {
+	public void setHeaderCanonicalization(Canonicalization headerCanonicalization) {
 		this.headerCanonicalization = headerCanonicalization;
 	}
 
-	public String[] getDefaultHeadersToSign() {
-		return defaultHeadersToSign;
-	}
-
 	public void addHeaderToSign(String header) {
+		if (null != header && 0 != header.length()) {
+			headersToSign.add(header);
+		}
+	}
 
-		if (header==null || "".equals(header)) return;
-		
-		int len = this.defaultHeadersToSign.length;
-		String[] headersToSign = new String[len+1];
-		for (int i=0; i<len; i++) {
-			if (header.equals(this.defaultHeadersToSign[i])) {
-				return;
-			}
-			headersToSign[i] = this.defaultHeadersToSign[i];
-		}
-		
-		headersToSign[len] = header;
-		
-		this.defaultHeadersToSign = headersToSign;
-	}
-	
 	public void removeHeaderToSign(String header) {
-		
-		if (header==null || "".equals(header)) return;
-		
-		int len = this.defaultHeadersToSign.length;
-		if (len==0) return;
-		
-		String[] headersToSign = new String[len-1];
-		
-		int found = 0;
-		for (int i=0; i<len-1; i++) {
-			
-			if (header.equals(this.defaultHeadersToSign[i+found])) {
-				found = 1;
-			}
-			headersToSign[i] = this.defaultHeadersToSign[i+found];
+		if (null != header && 0 != header.length() && !MIMIMUM_HEADERS_TO_SIGN.contains(header)) {
+			headersToSign.remove(header);
 		}
-		
-		this.defaultHeadersToSign = headersToSign;
 	}
-	
+
 	public void setLengthParam(boolean lengthParam) {
 		this.lengthParam = lengthParam;
 	}
-	
+
 	public boolean getLengthParam() {
 		return lengthParam;
 	}
@@ -245,25 +238,124 @@ public class DkimSigner {
 		try {
 			this.messageDigest = MessageDigest.getInstance(signingAlgorithm.getHashNotation());
 		} catch (NoSuchAlgorithmException nsae) {
-			throw new DkimException("The hashing algorithm "+signingAlgorithm.getHashNotation()+" is not known by the JVM", nsae);
+			throw new DkimException("The hashing algorithm " + signingAlgorithm.getHashNotation()
+					+ " is not known by the JVM", nsae);
 		}
-		
+
 		try {
 			this.signatureService = Signature.getInstance(signingAlgorithm.getJavaNotation());
 		} catch (NoSuchAlgorithmException nsae) {
-			throw new DkimException("The signing algorithm "+signingAlgorithm.getJavaNotation()+" is not known by the JVM", nsae);
+			throw new DkimException("The signing algorithm " + signingAlgorithm.getJavaNotation()
+					+ " is not known by the JVM", nsae);
 		}
-		
+
 		try {
-			this.signatureService.initSign(privkey);
+			this.signatureService.initSign(privatekey);
 		} catch (InvalidKeyException ike) {
 			throw new DkimException("The provided private key is invalid", ike);
 		}
-		
+
 		this.signingAlgorithm = signingAlgorithm;
 	}
 
-	private String serializeDKIMSignature(Map<String, String> dkimSignature) {
+	public String sign(DkimMessage message) throws DkimException, MessagingException {
+
+		Map<String, String> dkimSignature = new LinkedHashMap<String, String>();
+		dkimSignature.put("v", "1");
+		dkimSignature.put("a", this.signingAlgorithm.getRfc4871Notation());
+		dkimSignature.put("q", "dns/txt");
+		dkimSignature.put("c", getHeaderCanonicalization().getType() + "/" + getBodyCanonicalization().getType());
+		dkimSignature.put("t", ((long) new Date().getTime() / 1000) + "");
+		dkimSignature.put("s", this.selector);
+		dkimSignature.put("d", this.signingDomain);
+
+		// set identity inside signature
+		if (identity != null) {
+			dkimSignature.put("i", DkimUtil.QuotedPrintable(identity));
+		}
+
+		// process header
+		List<String> assureHeaders = new ArrayList<String>(MIMIMUM_HEADERS_TO_SIGN);
+
+		// intersect defaultHeadersToSign with available headers
+		StringBuffer headerList = new StringBuffer();
+		StringBuffer headerContent = new StringBuffer();
+		StringBuffer zParamString = new StringBuffer();
+
+		@SuppressWarnings("unchecked")
+		Enumeration<Header> headerLines = message.getAllHeaders();
+		while (headerLines.hasMoreElements()) {
+			Header header = (Header) headerLines.nextElement();
+
+			String headerName = header.getName();
+			if (headersToSign.contains(headerName)) {
+				String headerValue = header.getValue();
+				headerList.append(headerName).append(":");
+				headerContent.append(headerCanonicalization.canonicalizeHeader(headerName, headerValue));
+				headerContent.append("\r\n");
+				assureHeaders.remove(headerName);
+				if (zParam) {
+					zParamString.append(headerName);
+					zParamString.append(":");
+					zParamString.append(DkimUtil.QuotedPrintable(headerValue.trim()).replace("|", "=7C"));
+					zParamString.append("|");
+				}
+			}
+		}
+
+		if (!assureHeaders.isEmpty()) {
+			throw new DkimException("Could not find the header fields " + DkimUtil.concatArray(assureHeaders, ", ")
+					+ " for signing");
+		}
+
+		dkimSignature.put("h", headerList.substring(0, headerList.length() - 1));
+		if (zParam) {
+			String zParamTemp = zParamString.toString();
+			dkimSignature.put("z", zParamTemp.substring(0, zParamTemp.length() - 1));
+		}
+
+		// process body
+		String body = message.getEncodedBody();
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		CRLFOutputStream crlfos = new CRLFOutputStream(baos);
+		try {
+			crlfos.write(body.getBytes());
+			crlfos.close();
+		} catch (IOException e) {
+			throw new DkimException("The body conversion to MIME canonical CRLF line terminator failed", e);
+		}
+		body = baos.toString();
+
+		try {
+			body = bodyCanonicalization.canonicalizeBody(body);
+		} catch (IOException e) {
+			throw new DkimException("The body canonicalization failed", e);
+		}
+
+		if (lengthParam) {
+			dkimSignature.put("l", Integer.toString(body.length()));
+		}
+
+		// calculate and encode body hash
+		dkimSignature.put("bh", DkimUtil.base64Encode(messageDigest.digest(body.getBytes())));
+
+		// create signature
+		String serializedSignature = serializeDkimSignature(dkimSignature);
+
+		byte[] signedSignature;
+		try {
+			headerContent.append(headerCanonicalization.canonicalizeHeader(DKIM_SIGNATUR_HEADER, serializedSignature));
+			signatureService.update(headerContent.toString().getBytes());
+			signedSignature = signatureService.sign();
+		} catch (SignatureException se) {
+			throw new DkimException("The signing operation by Java security failed", se);
+		}
+
+		return DKIM_SIGNATUR_HEADER + ": " + serializedSignature
+				+ foldSignedSignature(DkimUtil.base64Encode(signedSignature), 3);
+	}
+
+	private String serializeDkimSignature(Map<String, String> dkimSignature) {
 
 		Set<Entry<String, String>> entries = dkimSignature.entrySet();
 		StringBuffer buf = new StringBuffer(), fbuf;
@@ -274,27 +366,25 @@ public class DkimSigner {
 			Entry<String, String> entry = iter.next();
 
 			// buf.append(entry.getKey()).append("=").append(entry.getValue()).append(";\t");
-			
+
 			fbuf = new StringBuffer();
 			fbuf.append(entry.getKey()).append("=").append(entry.getValue()).append(";");
-			
-			if (pos + fbuf.length() + 1 > MAXHEADERLENGTH) {
-				
+
+			if (pos + fbuf.length() + 1 > MAX_HEADER_LENGTH) {
+
 				pos = fbuf.length();
 
-				// line folding : this doesn't work "sometimes" --> maybe someone likes to debug this 
-				/* int i = 0;
-				while (i<pos) {
-					if (fbuf.substring(i).length()>MAXHEADERLENGTH) {
-						buf.append("\r\n\t").append(fbuf.substring(i, i+MAXHEADERLENGTH));
-						i += MAXHEADERLENGTH;
-					} else {
-						buf.append("\r\n\t").append(fbuf.substring(i));
-						pos -= i;
-						break;
-					}
-				} */
-				
+				// line folding : this doesn't work "sometimes" --> maybe
+				// someone likes to debug this
+				/*
+				 * int i = 0; while (i<pos) { if
+				 * (fbuf.substring(i).length()>MAXHEADERLENGTH) {
+				 * buf.append("\r\n\t").append(fbuf.substring(i,
+				 * i+MAXHEADERLENGTH)); i += MAXHEADERLENGTH; } else {
+				 * buf.append("\r\n\t").append(fbuf.substring(i)); pos -= i;
+				 * break; } }
+				 */
+
 				buf.append("\r\n\t").append(fbuf);
 
 			} else {
@@ -307,113 +397,27 @@ public class DkimSigner {
 
 		return buf.toString().trim();
 	}
-	
+
 	private String foldSignedSignature(String s, int offset) {
-		
+
 		int i = 0;
 		StringBuffer buf = new StringBuffer();
 
 		while (true) {
-			if (offset > 0 && s.substring(i).length()>MAXHEADERLENGTH - offset) {
-				buf.append(s.substring(i, i + MAXHEADERLENGTH - offset));
-				i += MAXHEADERLENGTH - offset;
+			if (offset > 0 && s.substring(i).length() > MAX_HEADER_LENGTH - offset) {
+				buf.append(s.substring(i, i + MAX_HEADER_LENGTH - offset));
+				i += MAX_HEADER_LENGTH - offset;
 				offset = 0;
-			} else if (s.substring(i).length()>MAXHEADERLENGTH) {
-				buf.append("\r\n\t").append(s.substring(i, i + MAXHEADERLENGTH));
-				i += MAXHEADERLENGTH;
+			} else if (s.substring(i).length() > MAX_HEADER_LENGTH) {
+				buf.append("\r\n\t").append(s.substring(i, i + MAX_HEADER_LENGTH));
+				i += MAX_HEADER_LENGTH;
 			} else {
 				buf.append("\r\n\t").append(s.substring(i));
 				break;
 			}
 		}
-		
+
 		return buf.toString();
 	}
 
-	public String sign(DkimMessage message) throws DkimException, MessagingException {
-
-		Map<String, String> dkimSignature = new LinkedHashMap<String, String>();
-		dkimSignature.put("v", "1");
-		dkimSignature.put("a", this.signingAlgorithm.getRfc4871Notation());
-		dkimSignature.put("q", "dns/txt");
-		dkimSignature.put("c", getHeaderCanonicalization().getType()+"/"+getBodyCanonicalization().getType());  
-		dkimSignature.put("t", ((long) new Date().getTime() / 1000)+"");
-		dkimSignature.put("s", this.selector);
-		dkimSignature.put("d", this.signingDomain);
-
-		// set identity inside signature
-		if (identity!=null) {
-			dkimSignature.put("i", DkimUtil.QuotedPrintable(identity));
-		}
-
-		// process header
-		ArrayList assureHeaders = (ArrayList) minimumHeadersToSign.clone();
-
-		// intersect defaultHeadersToSign with available headers
-		StringBuffer headerList = new StringBuffer();
-		StringBuffer headerContent = new StringBuffer();
-		StringBuffer zParamString = new StringBuffer();
-
-		Enumeration headerLines = message.getMatchingHeaderLines(defaultHeadersToSign);
-		while (headerLines.hasMoreElements()) {
-			String header = (String) headerLines.nextElement();
-			String[] headerParts = DkimUtil.splitHeader(header);
-			headerList.append(headerParts[0]).append(":");
-			headerContent.append(this.headerCanonicalization.canonicalizeHeader(headerParts[0], headerParts[1])).append("\r\n");
-			assureHeaders.remove(headerParts[0]);
-
-			// add optional z= header list, DKIM-Quoted-Printable
-			if (this.zParam) {
-				zParamString.append(headerParts[0]).append(":").append(DkimUtil.QuotedPrintable(headerParts[1].trim()).replace("|", "=7C")).append("|");
-			}
-		}
-
-		if (!assureHeaders.isEmpty()) {
-			throw new DkimException("Could not find the header fields "+DkimUtil.concatArray(assureHeaders, ", ")+" for signing");
-		}
-
-		dkimSignature.put("h", headerList.substring(0, headerList.length()-1));
-
-		if (this.zParam) {
-			String zParamTemp = zParamString.toString();
-			dkimSignature.put("z", zParamTemp.substring(0, zParamTemp.length()-1));
-		}
-
-		// process body
-		String body = message.getEncodedBody(); 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
-		CRLFOutputStream crlfos = new CRLFOutputStream(baos); 
-		try { 
-			crlfos.write(body.getBytes()); 
-		} catch (IOException e) { 
-			throw new DkimException("The body conversion to MIME canonical CRLF line terminator failed", e); 
-		} 
-		body = baos.toString(); 
-		
-		try {
-			body = this.bodyCanonicalization.canonicalizeBody(body);
-		} catch (IOException ioe) {
-			throw new DkimException("The body canonicalization failed", ioe);
-		}
-
-		if (this.lengthParam) {
-			dkimSignature.put("l", body.length()+"");
-		}
-
-		// calculate and encode body hash
-		dkimSignature.put("bh", DkimUtil.base64Encode(this.messageDigest.digest(body.getBytes())));
-
-		// create signature
-		String serializedSignature = serializeDKIMSignature(dkimSignature);
-
-		byte[] signedSignature;
-		try {
-			signatureService.update(headerContent.append(this.headerCanonicalization.canonicalizeHeader(DKIMSIGNATUREHEADER, " "+serializedSignature)).toString().getBytes());
-			signedSignature = signatureService.sign();
-		} catch (SignatureException se) {
-			throw new DkimException("The signing operation by Java security failed", se);
-		}
-
-		return DKIMSIGNATUREHEADER + ": " + serializedSignature+foldSignedSignature(DkimUtil.base64Encode(signedSignature), 3);
-	}
 }

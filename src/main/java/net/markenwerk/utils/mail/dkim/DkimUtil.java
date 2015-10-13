@@ -52,8 +52,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,17 +76,17 @@ public final class DkimUtil {
 	private DkimUtil() {
 	}
 
-	protected static String[] splitHeader(String header) throws DkimException {
-		int colonPosition = header.indexOf(':');
-		if (-1 == colonPosition) {
-			throw new DkimException("The header string " + header + " is no valid RFC 822 header-line");
-		}
-		return new String[] { header.substring(0, colonPosition), header.substring(colonPosition + 1) };
-	}
+//	protected static String[] splitHeader(String header) throws DkimException {
+//		int colonPosition = header.indexOf(':');
+//		if (-1 == colonPosition) {
+//			throw new DkimException("The header string " + header + " is no valid RFC 822 header-line");
+//		}
+//		return new String[] { header.substring(0, colonPosition), header.substring(colonPosition + 1) };
+//	}
 
-	protected static String concatArray(ArrayList<String> list, String separator) {
+	protected static String concatArray(List<String> assureHeaders, String separator) {
 		StringBuffer buffer = new StringBuffer();
-		for (String string : list) {
+		for (String string : assureHeaders) {
 			buffer.append(string);
 			buffer.append(separator);
 		}
