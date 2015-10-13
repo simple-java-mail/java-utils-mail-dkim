@@ -49,45 +49,48 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
-import sun.misc.BASE64Encoder;
-
 import com.sun.mail.util.QPEncoderStream;
+import net.iharder.Base64;
 
-/*
- * @author Florian Sager, http://www.agitos.de, 22.11.2008
+/**
+ * @author Torsten Krause (tk at markenwerk dot net)
+ * @author Florian Sager
+ * @since 1.0.0
  */
+public final class DkimUtil {
 
-public class DkimUtil {
-
-	protected static String[] splitHeader(String header) throws DkimException {
-		int colonPos = header.indexOf(':');
-		if (colonPos==-1) {
-			throw new DkimException("The header string "+header+" is no valid RFC 822 header-line");
-		}
-		return new String[]{header.substring(0, colonPos), header.substring(colonPos+1)};
+	private DkimUtil() {
 	}
 
-	protected static String concatArray(ArrayList l, String separator) {
-		StringBuffer buf = new StringBuffer();
-		Iterator iter = l.iterator();
-		while (iter.hasNext()) {
-			buf.append(iter.next()).append(separator);
+	protected static String[] splitHeader(String header) throws DkimException {
+		int colonPosition = header.indexOf(':');
+		if (-1 == colonPosition) {
+			throw new DkimException("The header string " + header + " is no valid RFC 822 header-line");
 		}
+		return new String[] { header.substring(0, colonPosition), header.substring(colonPosition + 1) };
+	}
 
-		return buf.substring(0, buf.length() - separator.length());
+	protected static String concatArray(ArrayList<String> list, String separator) {
+		StringBuffer buffer = new StringBuffer();
+		for (String string : list) {
+			buffer.append(string);
+			buffer.append(separator);
+		}
+		return buffer.substring(0, buffer.length() - separator.length());
 	}
 
 	protected static boolean isValidDomain(String domainname) {
@@ -98,84 +101,97 @@ public class DkimUtil {
 
 	// FSTODO: converts to "platforms default encoding" might be wrong ?
 	protected static String QuotedPrintable(String s) {
-
 		try {
-			ByteArrayOutputStream boas =   new ByteArrayOutputStream();
-			QPEncoderStream encodeStream = new QPEncoderStream(boas);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			QPEncoderStream encodeStream = new QPEncoderStream(out);
 			encodeStream.write(s.getBytes());
-			
-			String encoded = boas.toString();
+			encodeStream.close();
+
+			String encoded = out.toString();
 			encoded = encoded.replaceAll(";", "=3B");
 			encoded = encoded.replaceAll(" ", "=20");
 
 			return encoded;
-
-		} catch (IOException ioe) {}
-
-		return null;
+		} catch (IOException e) {
+			return null;
+		}
 	}
 
-	protected static String base64Encode(byte[] b) {
-		BASE64Encoder base64Enc = new BASE64Encoder();
-		String encoded = base64Enc.encode(b);
-		// remove unnecessary linefeeds after 76 characters
-		encoded = encoded.replace("\n", ""); // Linux+Win
-		return encoded.replace("\r", ""); // Win --> FSTODO: select Encoder without line termination 
+	protected static String base64Encode(byte[] bytes) {
+		String encoded = Base64.encodeBytes(bytes);
+
+		// remove unnecessary line feeds after 76 characters
+		encoded = encoded.replace("\n", "");
+		encoded = encoded.replace("\r", "");
+
+		return encoded;
 	}
 
 	public boolean checkDNSForPublickey(String signingDomain, String selector) throws DkimException {
 
-		Hashtable<String, String> env = new Hashtable<String, String>();
-        env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
-        String recordname = selector+"._domainkey."+signingDomain;
-        String value = null;
+		String recordName = getRecordName(signingDomain, selector);
+		String value = getValueFromDns(recordName);
 
-        try {
-        	DirContext dnsContext = new InitialDirContext(env);
+		// try to read public key from RR
+		String[] tags = value.split(";");
+		for (String tag : tags) {
+			tag = tag.trim();
+			if (tag.startsWith("p=")) {
 
-        	javax.naming.directory.Attributes attribs = dnsContext.getAttributes(recordname, new String[] {"TXT"});
-        	javax.naming.directory.Attribute txtrecord = attribs.get("txt");
-        	
-        	if (txtrecord == null) {
-        		throw new DkimException("There is no TXT record available for "+recordname);
-        	}
+				try {
+					KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-        	// "v=DKIM1; g=*; k=rsa; p=MIGfMA0G ..."
-        	value = (String) txtrecord.get();
+					// decode public key, FSTODO: convert to DER format
+					X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(Base64.decode(tag.substring(2)));
+					RSAPublicKey pubKey = (RSAPublicKey) keyFactory.generatePublic(pubSpec);
 
-        } catch (NamingException ne) {
-        	throw new DkimException("Selector lookup failed", ne);
-        }
-        
-        if (value == null) {
-        	throw new DkimException("Value of RR "+recordname+" couldn't be retrieved");
-        }
+					// FSTODO: create test signature with privKey and test
+					// validation with pubKey to check on a valid key pair
+					System.out.println(pubKey);
 
-        // try to read public key from RR
-        String[] tags = value.split(";");
-        for (String tag : tags) {
-        	tag = tag.trim();
-        	if (tag.startsWith("p=")) {
-        		
-        		try {
-	        		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-	
-	        		// decode public key, FSTODO: convert to DER format
-	        		PKCS8EncodedKeySpec pubSpec = new PKCS8EncodedKeySpec(tag.substring(2).getBytes());
-	        		RSAPrivateKey pubKey = (RSAPrivateKey) keyFactory.generatePublic(pubSpec);
-        		} catch (NoSuchAlgorithmException nsae) {
-        			throw new DkimException("RSA algorithm not found by JVM");
-        		} catch (InvalidKeySpecException ikse) {
-        			throw new DkimException("The public key "+tag+" in RR "+recordname+" couldn't be decoded.");
-        		}
-        		
-        		// FSTODO: create test signature with privKey and test validation with pubKey to check on a valid key pair
+				} catch (NoSuchAlgorithmException nsae) {
+					throw new DkimException("RSA algorithm not found by JVM");
+				} catch (IOException | InvalidKeySpecException ikse) {
+					throw new DkimException("The public key " + tag + " in RR " + recordName + " couldn't be decoded.");
+				}
 
-        		return true;
-        	}
+				return true;
+			}
 		}
 
-        throw new DkimException("No public key available in "+recordname);
+		throw new DkimException("No public key available in " + recordName);
+	}
+
+	private String getRecordName(String signingDomain, String selector) {
+		return selector + "._domainkey." + signingDomain;
+	}
+
+	private String getValueFromDns(String recordName) {
+		try {
+			DirContext dnsContext = new InitialDirContext(getEnvironment());
+			Attributes attributes = dnsContext.getAttributes(recordName, new String[] { "TXT" });
+			Attribute txtRecord = attributes.get("txt");
+
+			if (txtRecord == null) {
+				throw new DkimException("There is no TXT record available for " + recordName);
+			}
+
+			// "v=DKIM1; g=*; k=rsa; p=MIGfMA0G ..."
+			String value = (String) txtRecord.get();
+			if (null == value) {
+				throw new DkimException("Value of RR " + recordName + " couldn't be retrieved");
+			}
+			return value;
+
+		} catch (NamingException ne) {
+			throw new DkimException("Selector lookup failed", ne);
+		}
+	}
+
+	private Hashtable<String, String> getEnvironment() {
+		Hashtable<String, String> environment = new Hashtable<String, String>();
+		environment.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
+		return environment;
 	}
 
 }
