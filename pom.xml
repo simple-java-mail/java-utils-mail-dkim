@@ -52,6 +52,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>net.markenwerk</groupId>
+			<artifactId>utils-data-fetcher</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+		<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
 			<version>1.4.7</version>

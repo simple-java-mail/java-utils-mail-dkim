@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Torsten Krause.
+ * Copyright (c) 2015 Torsten Krause, Markenwerk GmbH.
  * 
  * This file is part of 'A DKIM library for JavaMail', hereafter
  * called 'this library', identified by the following coordinates:
@@ -46,15 +46,12 @@
 package net.markenwerk.utils.mail.dkim;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
@@ -74,6 +71,8 @@ import javax.mail.Header;
 import javax.mail.MessagingException;
 
 import com.sun.mail.util.CRLFOutputStream;
+
+import net.markenwerk.utils.data.fetcher.Fetcher;
 
 /**
  * Main class providing a signature according to DKIM RFC 4871.
@@ -135,22 +134,16 @@ public class DkimSigner {
 	private boolean zParam;
 	private Canonicalization headerCanonicalization = Canonicalization.RELAXED;
 	private Canonicalization bodyCanonicalization = Canonicalization.SIMPLE;
-	private PrivateKey privatekey;
+	private RSAPrivateKey privatekey;
 
-	public DkimSigner(String signingDomain, String selector, PrivateKey privkey) throws Exception {
+	public DkimSigner(String signingDomain, String selector, RSAPrivateKey privkey) throws Exception {
 		initDkimSigner(signingDomain, selector, privkey);
 	}
 
-	public DkimSigner(String signingDomain, String selector, String privateKeyFilename) throws Exception {
-
-		// read private key DER file
-		File privateKeyFile = new File(privateKeyFilename);
-		DataInputStream in = new DataInputStream(new FileInputStream(privateKeyFile));
-		byte[] privKeyBytes = new byte[(int) privateKeyFile.length()];
-		in.read(privKeyBytes);
-		in.close();
+	public DkimSigner(String signingDomain, String selector, InputStream derStream) throws Exception {
 
 		// decode private key
+		byte[] privKeyBytes = Fetcher.fetch(derStream);
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privKeyBytes);
 		RSAPrivateKey privKey = (RSAPrivateKey) keyFactory.generatePrivate(privSpec);
@@ -158,7 +151,7 @@ public class DkimSigner {
 
 	}
 
-	private void initDkimSigner(String signingDomain, String selector, PrivateKey privkey) throws DkimException {
+	private void initDkimSigner(String signingDomain, String selector, RSAPrivateKey privkey) throws DkimException {
 
 		if (!DkimUtil.isValidDomain(signingDomain)) {
 			throw new DkimException(signingDomain + " is an invalid signing domain");
