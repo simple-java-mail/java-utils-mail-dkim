@@ -52,6 +52,12 @@ public final class DomainKey {
 
 	private static final String RSA_MODE = "RSA/ECB/NoPadding";
 
+	private static final String DKIM_VERSION = "DKIM1";
+
+	private static final String RSA_KEY_TYPE = "rsa";
+
+	private static final String EMAIL_SERVICE_TYPE = "email";
+
 	private final long timestamp;
 
 	private final Pattern granularity;
@@ -67,7 +73,7 @@ public final class DomainKey {
 		this.tags = Collections.unmodifiableMap(tags);
 
 		// version
-		if (!("DKIM1".equals(getTagValue('v', "DKIM1")))) {
+		if (!(DKIM_VERSION.equals(getTagValue('v', DKIM_VERSION)))) {
 			throw new DkimException("Incompatible version v=" + getTagValue('v') + ".");
 		}
 
@@ -75,14 +81,14 @@ public final class DomainKey {
 		granularity = getGranularityPattern(getTagValue('g', "*"));
 
 		// key type
-		if (!("rsa".equals(getTagValue('k', "rsa")))) {
+		if (!(RSA_KEY_TYPE.equals(getTagValue('k', RSA_KEY_TYPE)))) {
 			throw new DkimException("Incompatible key type k=" + getTagValue('k') + ".");
 		}
 
 		// service type
 		serviceTypes = getServiceTypes(getTagValue('s', "*"));
-		if (!(serviceTypes.contains("*") || serviceTypes.contains("email"))) {
-			throw new DkimException("Incompatible version v=" + getTagValue('v') + ".");
+		if (!(serviceTypes.contains("*") || serviceTypes.contains(EMAIL_SERVICE_TYPE))) {
+			throw new DkimException("Incompatible service type s=" + getTagValue('s') + ".");
 		}
 
 		String privateKeyTagValue = getTagValue('p');
