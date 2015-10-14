@@ -68,7 +68,7 @@ public final class DomainKey {
 
 	private final Map<Character, String> tags;
 
-	public DomainKey(Map<Character, String> tags) {
+	public DomainKey(Map<Character, String> tags) throws DkimException {
 		timestamp = System.currentTimeMillis();
 		this.tags = Collections.unmodifiableMap(tags);
 
@@ -117,7 +117,7 @@ public final class DomainKey {
 		return null == tagValue ? fallback : tagValue;
 	}
 
-	private RSAPublicKey getPublicKey(String privateKeyTagValue) {
+	private RSAPublicKey getPublicKey(String privateKeyTagValue) throws DkimException {
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.decode(privateKeyTagValue));
@@ -168,11 +168,12 @@ public final class DomainKey {
 		return "Entry [timestamp=" + timestamp + ", tags=" + tags + "]";
 	}
 
-	public DkimAcceptance check(String from, RSAPrivateKey privateKey) throws DkimException {
+	public void check(String identity, RSAPrivateKey privateKey) throws DkimSigningException {
 
-		String localPart = from.substring(0, from.indexOf('@'));
+		String localPart = null == identity ? "" : identity.substring(0, identity.indexOf('@'));
 		if (!granularity.matcher(localPart).matches()) {
-			return DkimAcceptance.INCOMPATIBLE_GRANULARITY;
+			throw new DkimAcceptanceException("Incompatible identity (" + identity + ") for granularity g="
+					+ getTagValue('g') + " ");
 		}
 
 		try {
@@ -183,7 +184,7 @@ public final class DomainKey {
 			for (int i = 0, n = originalMessage.length; i < n; i++) {
 				originalMessage[i] = (byte) i;
 			}
-
+			
 			// encrypt original message
 			cipher.init(Cipher.ENCRYPT_MODE, privateKey);
 			byte[] encryptedMessage = cipher.doFinal(originalMessage);
@@ -192,17 +193,18 @@ public final class DomainKey {
 			cipher.init(Cipher.DECRYPT_MODE, publicKey);
 			byte[] decryptedMessage = cipher.doFinal(encryptedMessage);
 
-			if (Arrays.equals(originalMessage, decryptedMessage)) {
-				return DkimAcceptance.OKAY;
-			} else {
-				return DkimAcceptance.INCOMPATIBLE_PUBLIC_KEY;
+			System.out.println("bbb1");
+
+			if (!Arrays.equals(originalMessage, decryptedMessage)) {
+				throw new DkimAcceptanceException("Incompatible private key for public key p=" + getTagValue('p') + " ");
 			}
 
+			System.out.println("bbb");
+
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-			throw new DkimException("No JCE provider supports " + RSA_MODE + " ciphers.", e);
+			throw new DkimSigningException("No JCE provider supports " + RSA_MODE + " ciphers.", e);
 		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-			throw new DkimException("Performing RSA cryptography failed.", e);
+			throw new DkimSigningException("Performing RSA cryptography failed.", e);
 		}
 	}
-
 }

@@ -129,7 +129,7 @@ public class DkimSigner {
 	private final Set<String> headersToSign = new HashSet<String>(DEFAULT_HEADERS_TO_SIGN);
 
 	private SigningAlgorithm signingAlgorithm = SigningAlgorithm.SHA256_WITH_RSA;
-	private Signature signatureService;
+	private Signature signature;
 	private MessageDigest messageDigest;
 	private String signingDomain;
 	private String selector;
@@ -138,7 +138,8 @@ public class DkimSigner {
 	private boolean zParam;
 	private Canonicalization headerCanonicalization = Canonicalization.RELAXED;
 	private Canonicalization bodyCanonicalization = Canonicalization.SIMPLE;
-	private RSAPrivateKey privatekey;
+	private boolean checkDomainKey = true;
+	private RSAPrivateKey privateKey;
 
 	public DkimSigner(String signingDomain, String selector, RSAPrivateKey privkey) throws Exception {
 		initDkimSigner(signingDomain, selector, privkey);
@@ -163,7 +164,7 @@ public class DkimSigner {
 
 		this.signingDomain = signingDomain;
 		this.selector = selector.trim();
-		this.privatekey = privkey;
+		this.privateKey = privkey;
 		this.setSigningAlgorithm(this.signingAlgorithm);
 	}
 
@@ -233,29 +234,46 @@ public class DkimSigner {
 	public void setSigningAlgorithm(SigningAlgorithm signingAlgorithm) throws DkimException {
 
 		try {
-			this.messageDigest = MessageDigest.getInstance(signingAlgorithm.getHashNotation());
-		} catch (NoSuchAlgorithmException nsae) {
+			messageDigest = MessageDigest.getInstance(signingAlgorithm.getHashNotation());
+		} catch (NoSuchAlgorithmException e) {
 			throw new DkimException("The hashing algorithm " + signingAlgorithm.getHashNotation()
-					+ " is not known by the JVM", nsae);
+					+ " is not known by the JVM", e);
 		}
 
 		try {
-			this.signatureService = Signature.getInstance(signingAlgorithm.getJavaNotation());
-		} catch (NoSuchAlgorithmException nsae) {
+			signature = Signature.getInstance(signingAlgorithm.getJavaNotation());
+		} catch (NoSuchAlgorithmException e) {
 			throw new DkimException("The signing algorithm " + signingAlgorithm.getJavaNotation()
-					+ " is not known by the JVM", nsae);
+					+ " is not known by the JVM", e);
 		}
 
 		try {
-			this.signatureService.initSign(privatekey);
-		} catch (InvalidKeyException ike) {
-			throw new DkimException("The provided private key is invalid", ike);
+			signature.initSign(privateKey);
+		} catch (InvalidKeyException e) {
+			throw new DkimException("The provided private key is invalid", e);
 		}
 
 		this.signingAlgorithm = signingAlgorithm;
 	}
 
-	public String sign(DkimMessage message) throws DkimException, MessagingException {
+	public boolean isCheckDomainKey() {
+		return checkDomainKey;
+	}
+
+	public void setCheckDomainKey(boolean checkDomainKey) {
+		this.checkDomainKey = checkDomainKey;
+	}
+
+	public String sign(DkimMessage message) throws DkimAcceptanceException, DkimSigningException {
+
+		if (checkDomainKey) {
+			try {
+				DomainKeyUtil.getDomainKey(signingDomain, selector).check(identity, privateKey);
+			} catch (DkimException e) {
+				throw new DkimSigningException("Obtaining the domain key for " + signingDomain + "." + selector
+						+ " failed", e);
+			}
+		}
 
 		Map<String, String> dkimSignature = new LinkedHashMap<String, String>();
 		dkimSignature.put("v", "1");
@@ -279,30 +297,35 @@ public class DkimSigner {
 		StringBuffer headerContent = new StringBuffer();
 		StringBuffer zParamString = new StringBuffer();
 
-		@SuppressWarnings("unchecked")
-		Enumeration<Header> headerLines = message.getAllHeaders();
-		while (headerLines.hasMoreElements()) {
-			Header header = (Header) headerLines.nextElement();
+		try {
+			@SuppressWarnings("unchecked")
+			Enumeration<Header> headerLines = message.getAllHeaders();
+			while (headerLines.hasMoreElements()) {
+				Header header = (Header) headerLines.nextElement();
 
-			String headerName = header.getName();
-			if (headersToSign.contains(headerName)) {
-				String headerValue = header.getValue();
-				headerList.append(headerName).append(":");
-				headerContent.append(headerCanonicalization.canonicalizeHeader(headerName, headerValue));
-				headerContent.append("\r\n");
-				assureHeaders.remove(headerName);
-				if (zParam) {
-					zParamString.append(headerName);
-					zParamString.append(":");
-					zParamString.append(quotedPrintable(headerValue.trim()).replace("|", "=7C"));
-					zParamString.append("|");
+				String headerName = header.getName();
+				if (headersToSign.contains(headerName)) {
+					String headerValue = header.getValue();
+					headerList.append(headerName).append(":");
+					headerContent.append(headerCanonicalization.canonicalizeHeader(headerName, headerValue));
+					headerContent.append("\r\n");
+					assureHeaders.remove(headerName);
+					if (zParam) {
+						zParamString.append(headerName);
+						zParamString.append(":");
+						zParamString.append(quotedPrintable(headerValue.trim()).replace("|", "=7C"));
+						zParamString.append("|");
+					}
 				}
 			}
-		}
 
-		if (!assureHeaders.isEmpty()) {
-			throw new DkimException("Could not find the header fields " + concatList(assureHeaders, ", ")
-					+ " for signing");
+			if (!assureHeaders.isEmpty()) {
+				throw new DkimSigningException("Could not find the header fields " + concatList(assureHeaders, ", ")
+						+ " for signing");
+			}
+		} catch (MessagingException e) {
+			throw new DkimSigningException("Could not find the header fields " + concatList(assureHeaders, ", ")
+					+ " for signing", e);
 		}
 
 		dkimSignature.put("h", headerList.substring(0, headerList.length() - 1));
@@ -319,14 +342,14 @@ public class DkimSigner {
 			crlfos.write(body.getBytes());
 			crlfos.close();
 		} catch (IOException e) {
-			throw new DkimException("The body conversion to MIME canonical CRLF line terminator failed", e);
+			throw new DkimSigningException("The body conversion to MIME canonical CRLF line terminator failed", e);
 		}
 		body = baos.toString();
 
 		try {
 			body = bodyCanonicalization.canonicalizeBody(body);
 		} catch (IOException e) {
-			throw new DkimException("The body canonicalization failed", e);
+			throw new DkimSigningException("The body canonicalization failed", e);
 		}
 
 		if (lengthParam) {
@@ -342,10 +365,10 @@ public class DkimSigner {
 		byte[] signedSignature;
 		try {
 			headerContent.append(headerCanonicalization.canonicalizeHeader(DKIM_SIGNATUR_HEADER, serializedSignature));
-			signatureService.update(headerContent.toString().getBytes());
-			signedSignature = signatureService.sign();
+			signature.update(headerContent.toString().getBytes());
+			signedSignature = signature.sign();
 		} catch (SignatureException se) {
-			throw new DkimException("The signing operation by Java security failed", se);
+			throw new DkimSigningException("The signing operation by Java security failed", se);
 		}
 
 		return DKIM_SIGNATUR_HEADER + ": " + serializedSignature

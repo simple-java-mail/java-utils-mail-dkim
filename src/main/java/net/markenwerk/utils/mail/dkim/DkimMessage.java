@@ -106,6 +106,7 @@ public class DkimMessage extends SMTPMessage {
 	 *      MimeMessage.writeTo(OutputStream os String[] ignoreList); See the
 	 *      according Sun Licence, this contribution is CDDL.
 	 */
+	@Override
 	public void writeTo(OutputStream os, String[] ignoreList) throws IOException, MessagingException {
 
 		ByteArrayOutputStream osBody = new ByteArrayOutputStream();
@@ -145,12 +146,7 @@ public class DkimMessage extends SMTPMessage {
 		encodedBody = osBody.toString();
 
 		// Second, sign the message
-		String signatureHeaderLine;
-		try {
-			signatureHeaderLine = signer.sign(this);
-		} catch (Exception e) {
-			throw new MessagingException(e.getLocalizedMessage(), e);
-		}
+		String signatureHeaderLine = signer.sign(this);
 
 		// write the 'DKIM-Signature' header, all other headers and a clear \r\n
 		writeln(os, signatureHeaderLine);
@@ -175,11 +171,16 @@ public class DkimMessage extends SMTPMessage {
 		this.encodedBody = encodedBody;
 	}
 
-	// don't allow to switch to 8-bit MIME, instead 7-bit ASCII should be kept
-	// because in forwarding scenarios a change to Content-Transfer-Encoding
-	// to 7-bit ASCII breaks the DKIM signature
+	@Override
 	public void setAllow8bitMIME(boolean allow) {
+		// don't allow to switch to 8-bit MIME, instead 7-bit ASCII should be
+		// kept because in forwarding scenarios a change to
+		// Content-Transfer-Encoding to 7-bit ASCII breaks the DKIM signature
 		super.setAllow8bitMIME(false);
+	}
+
+	private static void writeln(OutputStream out) throws IOException {
+		out.write(NL);
 	}
 
 	private static void writeln(OutputStream out, String string) throws IOException {
@@ -188,7 +189,7 @@ public class DkimMessage extends SMTPMessage {
 		out.write(NL);
 	}
 
-	public static byte[] getBytes(String string) {
+	private static byte[] getBytes(String string) {
 		char[] chars = string.toCharArray();
 		byte[] bytes = new byte[chars.length];
 
@@ -199,7 +200,4 @@ public class DkimMessage extends SMTPMessage {
 		return bytes;
 	}
 
-	private static void writeln(OutputStream out) throws IOException {
-		out.write(NL);
-	}
 }

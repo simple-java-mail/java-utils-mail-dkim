@@ -82,11 +82,11 @@ public final class DomainKeyUtil {
 		DomainKeyUtil.cacheTtl = cacheTtl;
 	}
 
-	public static synchronized DomainKey getDomainKey(String signingDomain, String selector) {
+	public static synchronized DomainKey getDomainKey(String signingDomain, String selector) throws DkimException {
 		return getDomainKey(getRecordName(signingDomain, selector));
 	}
 
-	private static synchronized DomainKey getDomainKey(String recordName) {
+	private static synchronized DomainKey getDomainKey(String recordName) throws DkimException {
 		DomainKey entry = CACHE.get(recordName);
 		if (null != entry) {
 			if (0 == cacheTtl || entry.getTimestamp() + cacheTtl > System.currentTimeMillis()) {
@@ -98,15 +98,15 @@ public final class DomainKeyUtil {
 		return entry;
 	}
 
-	private static DomainKey fetchDomainKey(String recordName) {
+	private static DomainKey fetchDomainKey(String recordName) throws DkimException {
 		return new DomainKey(getTags(recordName));
 	}
 
-	public static Map<Character, String> getTags(String signingDomain, String selector) {
+	public static Map<Character, String> getTags(String signingDomain, String selector) throws DkimException {
 		return getTags(getRecordName(signingDomain, selector));
 	}
 
-	private static Map<Character, String> getTags(String recordName) {
+	private static Map<Character, String> getTags(String recordName) throws DkimException {
 		Map<Character, String> tags = new HashMap<>();
 		for (String tag : getValue(recordName).split(";")) {
 			try {
@@ -119,11 +119,11 @@ public final class DomainKeyUtil {
 		return tags;
 	}
 
-	public static String getValue(String signingDomain, String selector) {
+	public static String getValue(String signingDomain, String selector) throws DkimException {
 		return getValue(getRecordName(signingDomain, selector));
 	}
 
-	private static String getValue(String recordName) {
+	private static String getValue(String recordName) throws DkimException {
 		try {
 			DirContext dnsContext = new InitialDirContext(getEnvironment());
 			Attributes attributes = dnsContext.getAttributes(recordName, new String[] { "TXT" });
