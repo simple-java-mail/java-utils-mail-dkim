@@ -47,16 +47,26 @@ package net.markenwerk.utils.mail.dkim;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
@@ -72,6 +82,36 @@ import net.iharder.Base64;
  * @since 1.0.0
  */
 public final class DkimUtil {
+
+	private static final String RSA_MODE = "RSA/ECB/NoPadding";
+
+	private static class Entry {
+
+		private final long timestamp;
+
+		private final Pattern granularity;
+
+		private final RSAPublicKey publicKey;
+
+		public Entry(long timestamp, Pattern granularity, RSAPublicKey publicKey) {
+			super();
+			this.timestamp = timestamp;
+			this.granularity = granularity;
+			this.publicKey = publicKey;
+		}
+
+		@Override
+		public String toString() {
+			return "Entry [timestamp=" + timestamp + ", granularity=" + granularity + ", publicKey=" + publicKey + "]";
+		}
+
+	}
+
+	private static final Map<String, Entry> CACHE = new HashMap<>();
+
+	private static final long DEFAULT_CACHE_TTL = 2 * 60 * 60 * 1000;
+
+	private static long cacheTtl = DEFAULT_CACHE_TTL;
 
 	private DkimUtil() {
 	}
@@ -130,43 +170,134 @@ public final class DkimUtil {
 		return encoded;
 	}
 
-	public static boolean checkDnsForPublickey(String signingDomain, String selector) throws DkimException {
+	public static synchronized long getCacheTtl() {
+		return cacheTtl;
+	}
+
+	public static synchronized void setCacheTtl(long cacheTtl) {
+		if (cacheTtl < 0) {
+			cacheTtl = DEFAULT_CACHE_TTL;
+		}
+		DkimUtil.cacheTtl = cacheTtl;
+	}
+
+	public static DkimAcceptance checkDomainKey(String signingDomain, String selector, String from,
+			RSAPrivateKey privateKey) throws DkimException {
 
 		String recordName = getRecordName(signingDomain, selector);
-		String value = getValueFromDns(recordName);
+		Entry entry = getEntry(recordName);
 
-		// try to read public key from RR
-		String[] tags = value.split(";");
-		for (String tag : tags) {
-			tag = tag.trim();
-			if (tag.startsWith("p=")) {
-
-				try {
-					KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-
-					// decode public key, FSTODO: convert to DER format
-					X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(Base64.decode(tag.substring(2)));
-					RSAPublicKey pubKey = (RSAPublicKey) keyFactory.generatePublic(pubSpec);
-
-					// FSTODO: create test signature with privKey and test
-					// validation with pubKey to check on a valid key pair
-					System.out.println(pubKey);
-
-				} catch (NoSuchAlgorithmException nsae) {
-					throw new DkimException("RSA algorithm not found by JVM");
-				} catch (IOException | InvalidKeySpecException ikse) {
-					throw new DkimException("The public key " + tag + " in RR " + recordName + " couldn't be decoded.");
-				}
-
-				return true;
-			}
+		String localPart = from.substring(0, from.indexOf('@'));
+		if (!entry.granularity.matcher(localPart).matches()) {
+			return DkimAcceptance.INCOMPATIBLE_GRANULARITY;
 		}
 
-		throw new DkimException("No public key available in " + recordName);
+		try {
+			RSAPublicKey publicKey = entry.publicKey;
+
+			// prepare cipher and message
+			Cipher cipher = Cipher.getInstance(RSA_MODE);
+			byte[] originalMessage = new byte[publicKey.getModulus().bitLength() / Byte.SIZE];
+			for (int i = 0, n = originalMessage.length; i < n; i++) {
+				originalMessage[i] = (byte) i;
+			}
+
+			// encrypt original message
+			cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+			byte[] encryptedMessage = cipher.doFinal(originalMessage);
+
+			// decrypt encrypted message
+			cipher.init(Cipher.DECRYPT_MODE, publicKey);
+			byte[] decryptedMessage = cipher.doFinal(encryptedMessage);
+
+			if (Arrays.equals(originalMessage, decryptedMessage)) {
+				return DkimAcceptance.OKAY;
+			} else {
+				return DkimAcceptance.INCOMPATIBLE_PUBLIC_KEY;
+			}
+
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+			throw new DkimException("No JCE provider supports " + RSA_MODE + " ciphers.", e);
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			throw new DkimException("Performing RSA cryptography failed.", e);
+		}
+	}
+
+	private static synchronized Entry getEntry(String recordName) {
+		Entry entry = CACHE.get(recordName);
+		if (null != entry) {
+			if (0 == cacheTtl || entry.timestamp + cacheTtl > System.currentTimeMillis()) {
+				return entry;
+			}
+		}
+		entry = getEntryFromDns(recordName);
+		CACHE.put(recordName, entry);
+		return entry;
+	}
+
+	private static Entry getEntryFromDns(String recordName) {
+
+		Map<Character, String> tagValues = getTagsFromDns(recordName);
+		Pattern granularity = getGranularityPattern(tagValues.get('g'));
+		String privateKeyTagValue = tagValues.get('p');
+		if (null == privateKeyTagValue) {
+			throw new DkimException("No public key available for " + recordName);
+		}
+
+		try {
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+			X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.decode(privateKeyTagValue));
+			RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
+			return new Entry(System.currentTimeMillis(), granularity, publicKey);
+		} catch (NoSuchAlgorithmException nsae) {
+			throw new DkimException("RSA algorithm not found by JVM");
+		} catch (IOException | InvalidKeySpecException ikse) {
+			throw new DkimException("The public key " + privateKeyTagValue + " in RR " + recordName
+					+ " couldn't be decoded.");
+		}
+
+	}
+
+	public static Map<Character, String> getTagsFromDns(String signingDomain, String selector) {
+		return getTagsFromDns(getRecordName(signingDomain, selector));
+	}
+
+	private static Map<Character, String> getTagsFromDns(String recordName) {
+		Map<Character, String> tags = new HashMap<>();
+		for (String tag : getValueFromDns(recordName).split(";")) {
+			try {
+				tag = tag.trim();
+				tags.put(tag.charAt(0), tag.substring(2));
+			} catch (IndexOutOfBoundsException e) {
+				throw new DkimException("The tag " + tag + " in RR " + recordName + " couldn't be decoded.", e);
+			}
+		}
+		return tags;
+	}
+
+	private static final Pattern getGranularityPattern(String granularity) {
+		if (null == granularity) {
+			return Pattern.compile(".*");
+		}
+		StringTokenizer tokenizer = new StringTokenizer(granularity, "*", true);
+		StringBuffer pattern = new StringBuffer();
+		while (tokenizer.hasMoreElements()) {
+			String token = tokenizer.nextToken();
+			if ("*".equals(token)) {
+				pattern.append(".*");
+			} else {
+				pattern.append(Pattern.quote(token));
+			}
+		}
+		return Pattern.compile(pattern.toString());
 	}
 
 	private static String getRecordName(String signingDomain, String selector) {
 		return selector + "._domainkey." + signingDomain;
+	}
+
+	public static String getValueFromDns(String signingDomain, String selector) {
+		return getValueFromDns(getRecordName(signingDomain, selector));
 	}
 
 	private static String getValueFromDns(String recordName) {
