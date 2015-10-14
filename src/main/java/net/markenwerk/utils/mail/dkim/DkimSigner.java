@@ -66,11 +66,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.mail.Header;
 import javax.mail.MessagingException;
 
 import com.sun.mail.util.CRLFOutputStream;
+import com.sun.mail.util.QPEncoderStream;
+import net.iharder.Base64;
 
 import net.markenwerk.utils.data.fetcher.Fetcher;
 
@@ -153,7 +157,7 @@ public class DkimSigner {
 
 	private void initDkimSigner(String signingDomain, String selector, RSAPrivateKey privkey) throws DkimException {
 
-		if (!DkimUtil.isValidDomain(signingDomain)) {
+		if (!isValidDomain(signingDomain)) {
 			throw new DkimException(signingDomain + " is an invalid signing domain");
 		}
 
@@ -264,7 +268,7 @@ public class DkimSigner {
 
 		// set identity inside signature
 		if (identity != null) {
-			dkimSignature.put("i", DkimUtil.QuotedPrintable(identity));
+			dkimSignature.put("i", quotedPrintable(identity));
 		}
 
 		// process header
@@ -290,14 +294,14 @@ public class DkimSigner {
 				if (zParam) {
 					zParamString.append(headerName);
 					zParamString.append(":");
-					zParamString.append(DkimUtil.QuotedPrintable(headerValue.trim()).replace("|", "=7C"));
+					zParamString.append(quotedPrintable(headerValue.trim()).replace("|", "=7C"));
 					zParamString.append("|");
 				}
 			}
 		}
 
 		if (!assureHeaders.isEmpty()) {
-			throw new DkimException("Could not find the header fields " + DkimUtil.concatArray(assureHeaders, ", ")
+			throw new DkimException("Could not find the header fields " + concatList(assureHeaders, ", ")
 					+ " for signing");
 		}
 
@@ -330,7 +334,7 @@ public class DkimSigner {
 		}
 
 		// calculate and encode body hash
-		dkimSignature.put("bh", DkimUtil.base64Encode(messageDigest.digest(body.getBytes())));
+		dkimSignature.put("bh", base64Encode(messageDigest.digest(body.getBytes())));
 
 		// create signature
 		String serializedSignature = serializeDkimSignature(dkimSignature);
@@ -345,7 +349,7 @@ public class DkimSigner {
 		}
 
 		return DKIM_SIGNATUR_HEADER + ": " + serializedSignature
-				+ foldSignedSignature(DkimUtil.base64Encode(signedSignature), 3);
+				+ foldSignedSignature(base64Encode(signedSignature), 3);
 	}
 
 	private String serializeDkimSignature(Map<String, String> dkimSignature) {
@@ -411,6 +415,49 @@ public class DkimSigner {
 		}
 
 		return buf.toString();
+	}
+
+	private static String concatList(List<String> assureHeaders, String separator) {
+		StringBuffer buffer = new StringBuffer();
+		for (String string : assureHeaders) {
+			buffer.append(string);
+			buffer.append(separator);
+		}
+		return buffer.substring(0, buffer.length() - separator.length());
+	}
+
+	private static boolean isValidDomain(String domainname) {
+		Pattern pattern = Pattern.compile("(.+)\\.(.+)");
+		Matcher matcher = pattern.matcher(domainname);
+		return matcher.matches();
+	}
+
+	// FSTODO: converts to "platforms default encoding" might be wrong ?
+	private static String quotedPrintable(String s) {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			QPEncoderStream encodeStream = new QPEncoderStream(out);
+			encodeStream.write(s.getBytes());
+			encodeStream.close();
+
+			String encoded = out.toString();
+			encoded = encoded.replaceAll(";", "=3B");
+			encoded = encoded.replaceAll(" ", "=20");
+
+			return encoded;
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	private static String base64Encode(byte[] bytes) {
+		String encoded = Base64.encodeBytes(bytes);
+
+		// remove unnecessary line feeds after 76 characters
+		encoded = encoded.replace("\n", "");
+		encoded = encoded.replace("\r", "");
+
+		return encoded;
 	}
 
 }
