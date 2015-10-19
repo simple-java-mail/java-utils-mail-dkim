@@ -5,7 +5,7 @@ called 'this library', identified by the following coordinates:
    artifactId: utils-mail-dkim
 
 The initial version of this library is based on the a project called
-'DKIM for JavaMail' (http://sourceforge.net/projects/dkim-javamail/).
+'DKIM for JavaMail' (http://www.agitos.de/dkim-for-javamail/).
 
 See the CHANGES file in this directory for a rough overview of the changes made
 to 'DKIM for JavaMail'. Keep and extend this file if you want to create a
