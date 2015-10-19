@@ -46,6 +46,8 @@
 package net.markenwerk.utils.mail.dkim;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
@@ -145,15 +147,16 @@ public class DkimSigner {
 		initDkimSigner(signingDomain, selector, privkey);
 	}
 
-	public DkimSigner(String signingDomain, String selector, InputStream derStream) throws Exception {
+	public DkimSigner(String signingDomain, String selector, File derFile) throws Exception {
+		this(signingDomain, selector, new FileInputStream(derFile));
+	}
 
-		// decode private key
+	public DkimSigner(String signingDomain, String selector, InputStream derStream) throws Exception {
 		byte[] privKeyBytes = Fetcher.fetch(derStream);
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privKeyBytes);
 		RSAPrivateKey privKey = (RSAPrivateKey) keyFactory.generatePrivate(privSpec);
 		initDkimSigner(signingDomain, selector, privKey);
-
 	}
 
 	private void initDkimSigner(String signingDomain, String selector, RSAPrivateKey privkey) throws DkimException {
