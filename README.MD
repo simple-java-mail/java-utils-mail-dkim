@@ -125,7 +125,7 @@ private MimeMessage dkimSignMessage(MimeMessage message, String from, String sig
 }
 ```
 
-When the message is signed, a check is performed to check, whether the DNS resource record for the given domain and the given selector is prepared correctly for DKIM, i.e. if the given identity matches the configured granularity and if the given private key matches the configured public key. A [`DkimAcceptanceException`][DkimAcceptanceException] is thrown otherwise. This happens during `Transport.send(dkimSignedMessage)`
+When the message is signed, a check is performed to check, whether the DNS resource record for the given domain and the given selector is prepared correctly for DKIM, i.e. if the given identity matches the configured granularity and if the given private key matches the configured public key. A [`DkimAcceptanceException`][DkimAcceptanceException] is thrown otherwise. *Please be aware, that this happens during `Transport.send(dkimSignedMessage)`.*
 
 To disable this check, which is not recommended, call `dkimSigner.setCheckDomainKey(false)`. Using the [`DomainKeyUtil`][DomainKeyUtil], you can perform this check manually like this:
 
