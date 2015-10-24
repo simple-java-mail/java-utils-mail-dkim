@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/markenwerk/java-utils-mail-dkim.png?branch=master)](https://travis-ci.org/markenwerk/java-utils-mail-dkim)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim)
+[![Dependency Status](https://gemnasium.com/net.markenwerk/utils-mail-dkim.svg)](https://gemnasium.com/jirutka/net.markenwerk/utils-mail-dkim)
 
 This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [JavaMail](http://www.oracle.com/technetwork/java/javamail/index.html).
 
