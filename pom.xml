@@ -142,8 +142,8 @@
 				</plugins>
 			</build>
 		</profile>
-		
-			<profile>
+
+		<profile>
 			<id>coverall</id>
 			<build>
 				<plugins>
