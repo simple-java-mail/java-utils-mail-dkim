@@ -1,6 +1,7 @@
 # A DKIM library for JavaMail
 
-[![Build Status](https://travis-ci.org/markenwerk/java-utils-mail-dkim.png?branch=master)](https://travis-ci.org/markenwerk/java-utils-mail-dkim)
+[![Build Status](https://travis-ci.org/markenwerk/java-utils-mail-dkim.svg?branch=master)](https://travis-ci.org/markenwerk/java-utils-mail-dkim)
+[![Dependency Status](https://www.versioneye.com/user/projects/562bcd8b36d0ab0019001131/badge.svg?style=flat)](https://www.versioneye.com/user/projects/562bcd8b36d0ab0019001131)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim)
 
 This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [JavaMail](http://www.oracle.com/technetwork/java/javamail/index.html).
