@@ -57,6 +57,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
@@ -143,15 +144,76 @@ public class DkimSigner {
 	private boolean checkDomainKey = true;
 	private RSAPrivateKey privateKey;
 
-	public DkimSigner(String signingDomain, String selector, RSAPrivateKey privkey) throws Exception {
-		initDkimSigner(signingDomain, selector, privkey);
+	/**
+	 * Created a new {@code DkimSigner} for the given signing domain and
+	 * selector with the given {@link RSAPrivateKey}.
+	 * 
+	 * @param signingDomain
+	 *            The signing domain to be used.
+	 * @param selector
+	 *            The selector to be used.
+	 * @param privateKey
+	 *            The {@link RSAPrivateKey} to be used to sign
+	 *            {@link DkimMessage DkimMessage}s.
+	 * @throws DkimException
+	 *             If the given signing domain is invalid.
+	 */
+	public DkimSigner(String signingDomain, String selector, RSAPrivateKey privateKey) throws DkimException {
+		initDkimSigner(signingDomain, selector, privateKey);
 	}
 
-	public DkimSigner(String signingDomain, String selector, File derFile) throws Exception {
+	/**
+	 * Created a new {@code DkimSigner} for the given signing domain and
+	 * selector with the given DER encoded RSA private Key.
+	 * 
+	 * @param signingDomain
+	 *            The signing domain to be used.
+	 * @param selector
+	 *            The selector to be used.
+	 * @param derFile
+	 *            A {@link File} that contains the DER encoded RSA private key
+	 *            to be used.
+	 * 
+	 * @throws IOException
+	 *             If reading the content of the given {@link File} failed.
+	 * @throws NoSuchAlgorithmException
+	 *             If the RSA algorithm is not supported by the current JVM.
+	 * @throws InvalidKeySpecException
+	 *             If the content of the given {@link File} couldn't be
+	 *             interpreted as an RSA private key.
+	 * @throws DkimException
+	 *             If the given signing domain is invalid.
+	 */
+	public DkimSigner(String signingDomain, String selector, File derFile) throws IOException,
+			NoSuchAlgorithmException, InvalidKeySpecException, DkimException {
 		this(signingDomain, selector, new FileInputStream(derFile));
 	}
 
-	public DkimSigner(String signingDomain, String selector, InputStream derStream) throws Exception {
+	/**
+	 * Created a new {@code DkimSigner} for the given signing domain and
+	 * selector with the given DER encoded RSA private Key.
+	 * 
+	 * @param signingDomain
+	 *            The signing domain to be used.
+	 * @param selector
+	 *            The selector to be used.
+	 * @param derStream
+	 *            A {@link InputStream} that yields the DER encoded RSA private
+	 *            key to be used.
+	 * 
+	 * @throws IOException
+	 *             If reading the content of the given {@link InputStream}
+	 *             failed.
+	 * @throws NoSuchAlgorithmException
+	 *             If the RSA algorithm is not supported by the current JVM.
+	 * @throws InvalidKeySpecException
+	 *             If the content of the given {@link InputStream} couldn't be
+	 *             interpreted as an RSA private key.
+	 * @throws DkimException
+	 *             If the given signing domain is invalid.
+	 */
+	public DkimSigner(String signingDomain, String selector, InputStream derStream) throws IOException,
+			NoSuchAlgorithmException, InvalidKeySpecException {
 		byte[] privKeyBytes = Fetcher.fetch(derStream);
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privKeyBytes);
@@ -171,10 +233,24 @@ public class DkimSigner {
 		this.setSigningAlgorithm(this.signingAlgorithm);
 	}
 
+	/**
+	 * Returns the configured identity parameter.
+	 * 
+	 * @return The configured identity parameter.
+	 */
 	public String getIdentity() {
 		return identity;
 	}
 
+	/**
+	 * Sets the identity parameter to be used.
+	 * 
+	 * @param identity
+	 *            The identity to be used.
+	 * @throws DkimException
+	 *             If the given identity parameter doesn't belong to the signing
+	 *             domain of this {@code DkimSigner} or an subdomain thereof.
+	 */
 	public void setIdentity(String identity) throws DkimException {
 		if (null != identity) {
 			identity = identity.trim();
@@ -186,54 +262,131 @@ public class DkimSigner {
 		this.identity = identity;
 	}
 
+	/**
+	 * Returns the configured {@link Canonicalization} to be used for the body.
+	 * 
+	 * @return The configured {@link Canonicalization} to be used for the body.
+	 */
 	public Canonicalization getBodyCanonicalization() {
 		return bodyCanonicalization;
 	}
 
-	public void setBodyCanonicalization(Canonicalization bodyCanonicalization) {
-		this.bodyCanonicalization = bodyCanonicalization;
+	/**
+	 * Sets the {@link Canonicalization} to be used for the body.
+	 * 
+	 * @param canonicalization
+	 *            The {@link Canonicalization} to be used for the body.
+	 */
+	public void setBodyCanonicalization(Canonicalization canonicalization) {
+		this.bodyCanonicalization = canonicalization;
 	}
 
+	/**
+	 * Returns the configured {@link Canonicalization} to be used for the
+	 * headers.
+	 * 
+	 * @return The configured {@link Canonicalization} to be used for the
+	 *         headers.
+	 */
 	public Canonicalization getHeaderCanonicalization() {
 		return headerCanonicalization;
 	}
 
-	public void setHeaderCanonicalization(Canonicalization headerCanonicalization) {
-		this.headerCanonicalization = headerCanonicalization;
+	/**
+	 * Sets the {@link Canonicalization} to be used for the headers.
+	 * 
+	 * @param canonicalization
+	 *            The {@link Canonicalization} to be used for the headers.
+	 */
+	public void setHeaderCanonicalization(Canonicalization canonicalization) {
+		this.headerCanonicalization = canonicalization;
 	}
 
+	/**
+	 * Adds a header to the set of headers that will be included in the
+	 * signature, if present.
+	 * 
+	 * @param header
+	 *            The name of the header.
+	 */
 	public void addHeaderToSign(String header) {
 		if (null != header && 0 != header.length()) {
 			headersToSign.add(header);
 		}
 	}
 
+	/**
+	 * Removes a header from the set of headers that will be included in the
+	 * signature, unless it is one of the required headers ('From', 'To',
+	 * 'Subject').
+	 * 
+	 * @param header
+	 *            The name of the header.
+	 */
 	public void removeHeaderToSign(String header) {
 		if (null != header && 0 != header.length() && !MIMIMUM_HEADERS_TO_SIGN.contains(header)) {
 			headersToSign.remove(header);
 		}
 	}
 
-	public void setLengthParam(boolean lengthParam) {
-		this.lengthParam = lengthParam;
-	}
-
+	/**
+	 * Returns the configured length parameter.
+	 * 
+	 * @return The configured length parameter.
+	 */
 	public boolean getLengthParam() {
 		return lengthParam;
 	}
 
+	/**
+	 * Sets the length parameter to be used.
+	 * 
+	 * @param lengthParam
+	 *            The length parameter to be used.
+	 */
+	public void setLengthParam(boolean lengthParam) {
+		this.lengthParam = lengthParam;
+	}
+
+	/**
+	 * Returns the configured z parameter.
+	 * 
+	 * @return The configured z parameter.
+	 */
 	public boolean isZParam() {
 		return zParam;
 	}
 
-	public void setZParam(boolean param) {
-		zParam = param;
+	/**
+	 * Sets the z parameter to be used.
+	 * 
+	 * @param zParam
+	 *            The z parameter to be used.
+	 */
+	public void setZParam(boolean zParam) {
+		this.zParam = zParam;
 	}
 
+	/**
+	 * Returns the configured {@link SigningAlgorithm}.
+	 * 
+	 * @return The configured {@link SigningAlgorithm}.
+	 */
 	public SigningAlgorithm getSigningAlgorithm() {
 		return signingAlgorithm;
 	}
 
+	/**
+	 * Sets the {@link SigningAlgorithm} to be used.
+	 * 
+	 * @param signingAlgorithm
+	 *            The {@link SigningAlgorithm} to be used.
+	 * 
+	 * @throws DkimException
+	 *             If either the signing algorithm or the hashing algorithm is
+	 *             not supported by the current JVM or the {@link Signature}
+	 *             couldn't be initialized.
+	 */
 	public void setSigningAlgorithm(SigningAlgorithm signingAlgorithm) throws DkimException {
 
 		try {
@@ -259,15 +412,27 @@ public class DkimSigner {
 		this.signingAlgorithm = signingAlgorithm;
 	}
 
+	/**
+	 * Returns whether the domain key should be retrieved and checked.
+	 * 
+	 * @return Whether the domain key should be retrieved and checked.
+	 * @see DomainKey#check(String, RSAPrivateKey)
+	 */
 	public boolean isCheckDomainKey() {
 		return checkDomainKey;
 	}
 
+	/**
+	 * Sets, whether the domain key should be retrieved and checked.
+	 * 
+	 * @param checkDomainKey
+	 *            Whether the domain key should be retrieved and checked.
+	 */
 	public void setCheckDomainKey(boolean checkDomainKey) {
 		this.checkDomainKey = checkDomainKey;
 	}
 
-	public String sign(DkimMessage message) throws DkimAcceptanceException, DkimSigningException {
+	protected String sign(DkimMessage message) throws DkimAcceptanceException, DkimSigningException {
 
 		if (checkDomainKey) {
 			try {
@@ -348,12 +513,7 @@ public class DkimSigner {
 			throw new DkimSigningException("The body conversion to MIME canonical CRLF line terminator failed", e);
 		}
 		body = baos.toString();
-
-		try {
-			body = bodyCanonicalization.canonicalizeBody(body);
-		} catch (IOException e) {
-			throw new DkimSigningException("The body canonicalization failed", e);
-		}
+		body = bodyCanonicalization.canonicalizeBody(body);
 
 		if (lengthParam) {
 			dkimSignature.put("l", Integer.toString(body.length()));

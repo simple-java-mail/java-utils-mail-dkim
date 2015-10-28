@@ -45,8 +45,6 @@
  */
 package net.markenwerk.utils.mail.dkim;
 
-import java.io.IOException;
-
 /**
  * Provides 'simple' and 'relaxed' canonicalization according to RFC 4871.
  * 
@@ -56,13 +54,16 @@ import java.io.IOException;
  */
 public enum Canonicalization {
 
+	/**
+	 * The 'simple' canonicalization algorithm.
+	 */
 	SIMPLE {
 
 		public String canonicalizeHeader(String name, String value) {
 			return name + ": " + value;
 		}
 
-		public String canonicalizeBody(String body) throws IOException {
+		public String canonicalizeBody(String body) {
 
 			if (body == null || "".equals(body)) {
 				return "\r\n";
@@ -82,6 +83,9 @@ public enum Canonicalization {
 		}
 	},
 
+	/**
+	 * The 'relaxed' canonicalization algorithm.
+	 */
 	RELAXED {
 
 		public String canonicalizeHeader(String name, String value) {
@@ -90,7 +94,7 @@ public enum Canonicalization {
 			return name + ": " + value;
 		}
 
-		public String canonicalizeBody(String body) throws IOException {
+		public String canonicalizeBody(String body) {
 
 			if (body == null || "".equals(body)) {
 				return "\r\n";
@@ -113,11 +117,32 @@ public enum Canonicalization {
 		}
 	};
 
+	/**
+	 * Returns a string representation of the canonicalization algorithm.
+	 * 
+	 * @return The string representation of the canonicalization algorithm.
+	 */
 	public final String getType() {
 		return name().toLowerCase();
 	}
 
+	/**
+	 * Performs header canonicalization.
+	 * 
+	 * @param name
+	 *            The name of the header.
+	 * @param value
+	 *            The value of the header.
+	 * @return The canonicalized header.
+	 */
 	public abstract String canonicalizeHeader(String name, String value);
 
-	public abstract String canonicalizeBody(String body) throws IOException;
+	/**
+	 * Performs body canonicalization.
+	 * 
+	 * @param body
+	 *            The content of the body.
+	 * @return The canonicalized body.
+	 */
+	public abstract String canonicalizeBody(String body);
 }

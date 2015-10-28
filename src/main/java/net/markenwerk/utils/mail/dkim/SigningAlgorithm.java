@@ -45,6 +45,8 @@
  */
 package net.markenwerk.utils.mail.dkim;
 
+import java.security.MessageDigest;
+
 /**
  * Allowed signing algorithms by RFC 4871 with translation to different Java
  * notations.
@@ -55,8 +57,14 @@ package net.markenwerk.utils.mail.dkim;
  */
 public enum SigningAlgorithm {
 
+	/**
+	 * The rsa-sha256 signing algorithm.
+	 */
 	SHA256_WITH_RSA("rsa-sha256", "SHA256withRSA", "sha-256"),
 
+	/**
+	 * The rsa-sha1 signing algorithm.
+	 */
 	SHA1_WITH_RSA("rsa-sha1", "SHA1withRSA", "sha-1");
 
 	private final String rfc4871Notation;
@@ -69,14 +77,29 @@ public enum SigningAlgorithm {
 		this.hashNotation = hashNotation;
 	}
 
+	/**
+	 * Returns the signing algorithm notation as used in RFC 4871.
+	 * 
+	 * @return The signing algorithm notation as used in RFC 4871.
+	 */
 	public String getRfc4871Notation() {
 		return rfc4871Notation;
 	}
 
+	/**
+	 * Returns the signing algorithm notation as used by the JCE.
+	 * 
+	 * @return The signing algorithm notation as used by the JCE.
+	 */
 	public String getJavaNotation() {
 		return javaNotation;
 	}
 
+	/**
+	 * Returns the hashing algorithm notation as used by {@link MessageDigest}.
+	 * 
+	 * @return The hashing algorithm notation as used by {@link MessageDigest}.
+	 */
 	public String getHashNotation() {
 		return hashNotation;
 	}

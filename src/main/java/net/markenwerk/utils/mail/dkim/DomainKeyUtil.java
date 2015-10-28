@@ -71,10 +71,22 @@ public final class DomainKeyUtil {
 	private DomainKeyUtil() {
 	}
 
+	/**
+	 * Returns the configured TTL (time to live) for retrieved {@link DomainKey}
+	 * s.
+	 * 
+	 * @return The configured TTL for retrieved {@link DomainKey}s.
+	 */
 	public static synchronized long getCacheTtl() {
 		return cacheTtl;
 	}
 
+	/**
+	 * Sets the TTL (time to live) for retrieved {@link DomainKey}s.
+	 * 
+	 * @param cacheTtl
+	 *            The TTL for retrieved {@link DomainKey}s.
+	 */
 	public static synchronized void setCacheTtl(long cacheTtl) {
 		if (cacheTtl < 0) {
 			cacheTtl = DEFAULT_CACHE_TTL;
@@ -82,26 +94,53 @@ public final class DomainKeyUtil {
 		DomainKeyUtil.cacheTtl = cacheTtl;
 	}
 
+	/**
+	 * Retrieves the {@link DomainKey} for the given signing domain and
+	 * selector.
+	 * 
+	 * @param signingDomain
+	 *            The signing domain.
+	 * @param selector
+	 *            The selector.
+	 * @return The retrieved {@link DomainKey}.
+	 * @throws DkimException
+	 *             If the domain key couldn't be retrieved or if either the
+	 *             version, key type or service type given in the tags is
+	 *             incompatible to this library ('DKIM1', 'RSA' and 'email'
+	 *             respectively).
+	 */
 	public static synchronized DomainKey getDomainKey(String signingDomain, String selector) throws DkimException {
 		return getDomainKey(getRecordName(signingDomain, selector));
 	}
 
 	private static synchronized DomainKey getDomainKey(String recordName) throws DkimException {
-		DomainKey entry = CACHE.get(recordName);
-		if (null != entry) {
-			if (0 == cacheTtl || entry.getTimestamp() + cacheTtl > System.currentTimeMillis()) {
-				return entry;
+		DomainKey domainKey = CACHE.get(recordName);
+		if (null != domainKey) {
+			if (0 == cacheTtl || domainKey.getTimestamp() + cacheTtl > System.currentTimeMillis()) {
+				return domainKey;
 			}
 		}
-		entry = fetchDomainKey(recordName);
-		CACHE.put(recordName, entry);
-		return entry;
+		domainKey = fetchDomainKey(recordName);
+		CACHE.put(recordName, domainKey);
+		return domainKey;
 	}
 
 	private static DomainKey fetchDomainKey(String recordName) throws DkimException {
 		return new DomainKey(getTags(recordName));
 	}
 
+	/**
+	 * Retrieves the tags of a domain key for the given signing domain and
+	 * selector.
+	 * 
+	 * @param signingDomain
+	 *            The signing domain.
+	 * @param selector
+	 *            The selector.
+	 * @return The retrieved tags.
+	 * @throws DkimException
+	 *             If the domain key couldn't be retrieved.
+	 */
 	public static Map<Character, String> getTags(String signingDomain, String selector) throws DkimException {
 		return getTags(getRecordName(signingDomain, selector));
 	}
@@ -119,6 +158,17 @@ public final class DomainKeyUtil {
 		return tags;
 	}
 
+	/**
+	 * Retrieves the raw domain key for the given signing domain and selector.
+	 * 
+	 * @param signingDomain
+	 *            The signing domain.
+	 * @param selector
+	 *            The selector.
+	 * @return The raw domain key.
+	 * @throws DkimException
+	 *             If the domain key couldn't be retrieved.
+	 */
 	public static String getValue(String signingDomain, String selector) throws DkimException {
 		return getValue(getRecordName(signingDomain, selector));
 	}

@@ -48,6 +48,12 @@ import javax.crypto.NoSuchPaddingException;
 
 import net.iharder.Base64;
 
+/**
+ * A {@code DomainKey} holds the information about a domain key.
+ * 
+ * @author Torsten Krause (tk at markenwerk dot net)
+ * @since 1.0.0
+ */
 public final class DomainKey {
 
 	private static final String RSA_MODE = "RSA/ECB/NoPadding";
@@ -68,6 +74,16 @@ public final class DomainKey {
 
 	private final Map<Character, String> tags;
 
+	/**
+	 * Creates a new {@code DomainKey} from the given tags.
+	 * 
+	 * @param tags
+	 *            The tags to be used.
+	 * @throws DkimException
+	 *             If either the version, key type or service type given in the
+	 *             tags is incompatible to this library ('DKIM1', 'RSA' and
+	 *             'email' respectively).
+	 */
 	public DomainKey(Map<Character, String> tags) throws DkimException {
 		timestamp = System.currentTimeMillis();
 		this.tags = Collections.unmodifiableMap(tags);
@@ -143,22 +159,52 @@ public final class DomainKey {
 		return Pattern.compile(pattern.toString());
 	}
 
+	/**
+	 * Returns the construction time of this {@code DomainKey} as a timestamp.
+	 * 
+	 * @return The construction time of this {@code DomainKey} as a timestamp.
+	 */
 	public long getTimestamp() {
 		return timestamp;
 	}
 
+	/**
+	 * Returns a {@link Pattern} that matches the granularity of this
+	 * {@code DomainKey}, as described in the 'g' tag.
+	 * 
+	 * @return A {@link Pattern} that matches the granularity of this
+	 *         {@code DomainKey}.
+	 */
 	public Pattern getGranularity() {
 		return granularity;
 	}
 
+	/**
+	 * Returns the set of service types supported by this {@code DomainKey}, as
+	 * described in the 's' tag.
+	 * 
+	 * @return The set of service types supported by this {@code DomainKey}.
+	 */
 	public Set<String> getServiceTypes() {
 		return serviceTypes;
 	}
 
+	/**
+	 * Returns the set of public key of this {@code DomainKey}, as provided by
+	 * the 'p' tag.
+	 * 
+	 * @return The set of public key of this {@code DomainKey}.
+	 */
 	public RSAPublicKey getPublicKey() {
 		return publicKey;
 	}
 
+	/**
+	 * Returns the {@link Collections#unmodifiableMap(Map) unmodifiable} map of
+	 * tags, this {@code DomainKey} was constructed from.
+	 * 
+	 * @return The map of tags, this {@code DomainKey} was constructed from.
+	 */
 	public Map<Character, String> getTags() {
 		return tags;
 	}
@@ -168,6 +214,21 @@ public final class DomainKey {
 		return "Entry [timestamp=" + timestamp + ", tags=" + tags + "]";
 	}
 
+	/**
+	 * Checks, whether this {@code DomainKey} fits to the given identity and
+	 * {@link RSAPrivateKey}.
+	 * 
+	 * @param identity
+	 *            The identity.
+	 * @param privateKey
+	 *            The {@link RSAPrivateKey}.
+	 * @throws DkimSigningException
+	 *             If either the {@link DomainKey#getGranularity() granularity}
+	 *             of this {@code DomainKey} doesn't match the given identity or
+	 *             the {@link DomainKey#getPublicKey() public key} of this
+	 *             {@code DomainKey} doesn't belong to the given
+	 *             {@link RSAPrivateKey}.
+	 */
 	public void check(String identity, RSAPrivateKey privateKey) throws DkimSigningException {
 
 		String localPart = null == identity ? "" : identity.substring(0, identity.indexOf('@'));
@@ -184,7 +245,7 @@ public final class DomainKey {
 			for (int i = 0, n = originalMessage.length; i < n; i++) {
 				originalMessage[i] = (byte) i;
 			}
-			
+
 			// encrypt original message
 			cipher.init(Cipher.ENCRYPT_MODE, privateKey);
 			byte[] encryptedMessage = cipher.doFinal(originalMessage);

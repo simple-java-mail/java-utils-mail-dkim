@@ -42,6 +42,12 @@ public class DkimSigningException extends MessagingException {
 
 	private static final long serialVersionUID = -3899148862673205389L;
 
+	/**
+	 * Constructs a {@code DkimSigningException} with the given message.
+	 *
+	 * @param message
+	 *            The message.
+	 */
 	public DkimSigningException(String message) {
 		/*
 		 * This is a hack: If an {@link Exception} caught in {@link IOException}
@@ -52,14 +58,23 @@ public class DkimSigningException extends MessagingException {
 		super(message, new IOException());
 	}
 
-	public DkimSigningException(String message, Exception e) {
+	/**
+	 * Constructs a {@code DkimSigningException} with the given message and
+	 * cause. The given cause is chained to this exception.
+	 *
+	 * @param message
+	 *            The message.
+	 * @param cause
+	 *            The causing exception.
+	 */
+	public DkimSigningException(String message, Exception cause) {
 		/*
 		 * This is a hack: If an {@link Exception} caught in {@link IOException}
 		 * or a {@link MessagingException} caused by an {@link IOException},
 		 * {@link SMTPTransport} will hang forever (neither returning, nor
 		 * throwing the exception)
 		 */
-		super(message, new IOException(e));
+		super(message, new IOException(cause));
 	}
 
 }
