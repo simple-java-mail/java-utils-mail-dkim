@@ -10,6 +10,7 @@
 	<name>${project.groupId}:${project.artifactId}</name>
 	<description>A DKIM library for JavaMail</description>
 	<url>https://github.com/markenwerk/java-utils-mail-dkim</url>
+	<inceptionYear>2015</inceptionYear>
 
 	<licenses>
 		<license>
