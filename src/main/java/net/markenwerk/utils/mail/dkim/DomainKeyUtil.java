@@ -62,7 +62,7 @@ import javax.naming.directory.InitialDirContext;
  */
 public final class DomainKeyUtil {
 
-	private static final Map<String, DomainKey> CACHE = new HashMap<>();
+	private static final Map<String, DomainKey> CACHE = new HashMap<String, DomainKey>();
 
 	private static final long DEFAULT_CACHE_TTL = 2 * 60 * 60 * 1000;
 
@@ -146,7 +146,7 @@ public final class DomainKeyUtil {
 	}
 
 	private static Map<Character, String> getTags(String recordName) throws DkimException {
-		Map<Character, String> tags = new HashMap<>();
+		Map<Character, String> tags = new HashMap<Character, String>();
 		for (String tag : getValue(recordName).split(";")) {
 			try {
 				tag = tag.trim();

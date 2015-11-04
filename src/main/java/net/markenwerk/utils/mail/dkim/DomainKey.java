@@ -116,7 +116,7 @@ public final class DomainKey {
 	}
 
 	private Set<String> getServiceTypes(String serviceTypesTagValue) {
-		Set<String> serviceTypes = new HashSet<>();
+		Set<String> serviceTypes = new HashSet<String>();
 		StringTokenizer tokenizer = new StringTokenizer(serviceTypesTagValue, ":", false);
 		while (tokenizer.hasMoreElements()) {
 			serviceTypes.add(tokenizer.nextToken().trim());
@@ -140,7 +140,9 @@ public final class DomainKey {
 			return (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
 		} catch (NoSuchAlgorithmException nsae) {
 			throw new DkimException("RSA algorithm not found by JVM");
-		} catch (IOException | InvalidKeySpecException ikse) {
+		} catch (IOException e) {
+			throw new DkimException("The public key " + privateKeyTagValue + " couldn't be read.");
+		} catch (InvalidKeySpecException e) {
 			throw new DkimException("The public key " + privateKeyTagValue + " couldn't be decoded.");
 		}
 	}
@@ -254,17 +256,19 @@ public final class DomainKey {
 			cipher.init(Cipher.DECRYPT_MODE, publicKey);
 			byte[] decryptedMessage = cipher.doFinal(encryptedMessage);
 
-			System.out.println("bbb1");
-
 			if (!Arrays.equals(originalMessage, decryptedMessage)) {
 				throw new DkimAcceptanceException("Incompatible private key for public key p=" + getTagValue('p') + " ");
 			}
 
-			System.out.println("bbb");
-
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+		} catch (NoSuchAlgorithmException e) {
 			throw new DkimSigningException("No JCE provider supports " + RSA_MODE + " ciphers.", e);
-		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (NoSuchPaddingException e) {
+			throw new DkimSigningException("No JCE provider supports " + RSA_MODE + " ciphers.", e);
+		} catch (InvalidKeyException e) {
+			throw new DkimSigningException("Performing RSA cryptography failed.", e);
+		} catch (IllegalBlockSizeException e) {
+			throw new DkimSigningException("Performing RSA cryptography failed.", e);
+		} catch (BadPaddingException e) {
 			throw new DkimSigningException("Performing RSA cryptography failed.", e);
 		}
 	}
