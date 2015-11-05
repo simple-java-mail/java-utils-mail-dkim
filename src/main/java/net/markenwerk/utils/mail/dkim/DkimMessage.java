@@ -47,7 +47,6 @@ package net.markenwerk.utils.mail.dkim;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Enumeration;
 
@@ -56,6 +55,8 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 
 import com.sun.mail.smtp.SMTPMessage;
+
+import net.markenwerk.utils.data.fetcher.Fetcher;
 
 /**
  * Extension of SMTPMessage for the inclusion of a DKIM signature.
@@ -108,43 +109,33 @@ public class DkimMessage extends SMTPMessage {
 	@Override
 	public void writeTo(OutputStream os, String[] ignoreList) throws IOException, MessagingException {
 
-		ByteArrayOutputStream osBody = new ByteArrayOutputStream();
+		ByteArrayOutputStream bodyBuffer = new ByteArrayOutputStream();
 
-		// Inside saveChanges() it is assured that content encodings are set in
+		// inside saveChanges it is assured that content encodings are set in
 		// all parts of the body
 		if (!saved) {
 			saveChanges();
 		}
 
-		// First, write out the body to the body buffer
 		if (modified) {
-			// Finally, the content. Encode if required.
-			// TODO: May need to account for ESMTP ?
-			OutputStream osEncoding = MimeUtility.encode(osBody, this.getEncoding());
-			this.getDataHandler().writeTo(osEncoding);
-			osEncoding.flush(); // Needed to complete encoding
+			// write out the body from the dataHandler through the
+			// encodingOutputStream into the bodyBuffer to the body buffer
+			OutputStream encodingOutputStream = MimeUtility.encode(bodyBuffer, getEncoding());
+			getDataHandler().writeTo(encodingOutputStream);
+			encodingOutputStream.flush();
 		} else {
-			// Else, the content is untouched, so we can just output it
-			// Finally, the content.
-			if (content == null) {
-				// call getContentStream to give subclass a chance to
-				// provide the data on demand
-				InputStream is = getContentStream();
-				// now copy the data to the output stream
-				byte[] buffer = new byte[8192];
-				int length;
-				while ((length = is.read(buffer)) > 0) {
-					osBody.write(buffer, 0, length);
-				}
-				is.close();
+			if (content != null) {
+				// just write the readily available content into the bodyBuffer
+				bodyBuffer.write(content);
 			} else {
-				osBody.write(content);
+				// write the provided contentStreaminto the bodyBuffer
+				Fetcher.fetch(getContentStream(), bodyBuffer, true, false);
 			}
-			osBody.flush();
+			bodyBuffer.flush();
 		}
-		encodedBody = osBody.toString();
+		encodedBody = bodyBuffer.toString();
 
-		// Second, sign the message
+		// second, sign the message
 		String signatureHeaderLine = signer.sign(this);
 
 		// write the 'DKIM-Signature' header, all other headers and a clear \r\n
@@ -158,7 +149,7 @@ public class DkimMessage extends SMTPMessage {
 		os.flush();
 
 		// write the message body
-		os.write(osBody.toByteArray());
+		os.write(bodyBuffer.toByteArray());
 		os.flush();
 	}
 
