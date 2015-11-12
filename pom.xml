@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.markenwerk</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>1.1.0</version>
+	<version>1.1.1</version>
 	<packaging>jar</packaging>
 
 	<name>${project.groupId}:${project.artifactId}</name>
@@ -55,7 +55,7 @@
 		<dependency>
 			<groupId>net.markenwerk</groupId>
 			<artifactId>utils-data-fetcher</artifactId>
-			<version>1.1.1</version>
+			<version>1.1.2</version>
 		</dependency>
 
 		<dependency>

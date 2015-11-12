@@ -13,17 +13,17 @@ This library allows you to
  - sign MIME Messages according to the DKIM standard,
  - check, whether the DNS resource record for a sending domain is prepared correctly for DKIM.
 
-This library is hosted in the [Maven Central Repositoy](http://search.maven.org/#artifactdetails|net.markenwerk|utils-mail-dkim|1.1.0|jar). You can use it with the following coordinates:
+This library is hosted in the [Maven Central Repositoy](http://search.maven.org/#artifactdetails|net.markenwerk|utils-mail-dkim|1.1.1|jar). You can use it with the following coordinates:
 
 ```xml
 <dependency>
 	<groupId>net.markenwerk</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>1.1.0</version>
+	<version>1.1.1</version>
 </dependency>
 ```
 
-Consult the [usage description](#usage) and [Javadoc](http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.0/index.html) for further information.
+Consult the [usage description](#usage) and [Javadoc](http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html) for further information.
 
 
 ## Origin and state
@@ -136,10 +136,10 @@ DomainKey domainKey = DomainKeyUtil.getDomainKey(signingDomain, selector);
 domainKey.check(from, getDkimPrivateKeyFileForSender(from));
 ```
 
-[DkimAcceptanceException]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.0/index.html?net/markenwerk/utils/mail/dkim/DkimAcceptanceException.html
-[DkimMessage]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.0/index.html?net/markenwerk/utils/mail/dkim/DkimMessage.html
-[DkimSigner]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.0/index.html?net/markenwerk/utils/mail/dkim/DkimSigner.html
-[DomainKeyUtil]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.0/index.html?net/markenwerk/utils/mail/dkim/DomainKeyUtil.html
+[DkimAcceptanceException]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimAcceptanceException.html
+[DkimMessage]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimMessage.html
+[DkimSigner]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimSigner.html
+[DomainKeyUtil]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DomainKeyUtil.html
 [MimeMessage]: http://javamail.java.net/nonav/docs/api/index.html?javax/mail/internet/MimeMessage.html
 [RSAPrivateKey]: http://docs.oracle.com/javase/7/docs/api/index.html?java/security/interfaces/RSAPrivateKey.html
 [Session]: http://javamail.java.net/nonav/docs/api/index.html?javax/mail/Session.html
