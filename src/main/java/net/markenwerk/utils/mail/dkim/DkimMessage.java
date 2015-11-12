@@ -109,7 +109,6 @@ public class DkimMessage extends SMTPMessage {
 	@Override
 	public void writeTo(OutputStream os, String[] ignoreList) throws IOException, MessagingException {
 
-		ByteArrayOutputStream bodyBuffer = new ByteArrayOutputStream();
 
 		// inside saveChanges it is assured that content encodings are set in
 		// all parts of the body
@@ -117,22 +116,26 @@ public class DkimMessage extends SMTPMessage {
 			saveChanges();
 		}
 
+		ByteArrayOutputStream bodyBuffer = new ByteArrayOutputStream();
 		if (modified) {
 			// write out the body from the dataHandler through the
-			// encodingOutputStream into the bodyBuffer to the body buffer
+			// encodingOutputStream into the bodyBuffer
 			OutputStream encodingOutputStream = MimeUtility.encode(bodyBuffer, getEncoding());
 			getDataHandler().writeTo(encodingOutputStream);
 			encodingOutputStream.flush();
-		} else {
-			if (content != null) {
-				// just write the readily available content into the bodyBuffer
-				bodyBuffer.write(content);
-			} else {
-				// write the provided contentStreaminto the bodyBuffer
-				Fetcher.fetch(getContentStream(), bodyBuffer, true, false);
-			}
+			encodingOutputStream.close();
+		} else if (null == content) {
+			// write the provided contentStream into the bodyBuffer
+			Fetcher.fetch(getContentStream(), bodyBuffer, true, false);
 			bodyBuffer.flush();
+			bodyBuffer.close();
+		} else {
+			// just write the readily available content into the bodyBuffer
+			bodyBuffer.write(content);
+			bodyBuffer.flush();
+			bodyBuffer.close();
 		}
+
 		encodedBody = bodyBuffer.toString();
 
 		// second, sign the message
