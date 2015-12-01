@@ -136,10 +136,11 @@ DomainKey domainKey = DomainKeyUtil.getDomainKey(signingDomain, selector);
 domainKey.check(from, getDkimPrivateKeyFileForSender(from));
 ```
 
-[DkimAcceptanceException]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimAcceptanceException.html
-[DkimMessage]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimMessage.html
-[DkimSigner]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimSigner.html
-[DomainKeyUtil]: http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DomainKeyUtil.html
+[DkimAcceptanceException]: http://static.javadoc.io/net.markenwerk/utils-mail-dkim/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimAcceptanceException.html
+[DkimMessage]: http://static.javadoc.io/net.markenwerk/utils-mail-dkim/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimMessage.html
+[DkimSigner]: http://static.javadoc.io/net.markenwerk/utils-mail-dkim/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DkimSigner.html
+[DomainKeyUtil]: http://static.javadoc.io/net.markenwerk/utils-mail-dkim/1.1.1/index.html?net/markenwerk/utils/mail/dkim/DomainKeyUtil.html
+
 [MimeMessage]: http://javamail.java.net/nonav/docs/api/index.html?javax/mail/internet/MimeMessage.html
 [RSAPrivateKey]: http://docs.oracle.com/javase/7/docs/api/index.html?java/security/interfaces/RSAPrivateKey.html
 [Session]: http://javamail.java.net/nonav/docs/api/index.html?javax/mail/Session.html
