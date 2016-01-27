@@ -97,7 +97,7 @@
 				<version>3.0.1</version>
 				<configuration>
 					<instructions>
-						<Bundle-DocURL>${project.scm.url}</Bundle-DocURL>
+						<Bundle-DocURL>${project.url}</Bundle-DocURL>
 					</instructions>
 				</configuration>
 				<executions>
