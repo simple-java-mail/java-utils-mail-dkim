@@ -59,7 +59,7 @@ import com.sun.mail.smtp.SMTPMessage;
 import net.markenwerk.utils.data.fetcher.BufferedFetcher;
 
 /**
- * Extension of SMTPMessage for the inclusion of a DKIM signature.
+ * Extension of {@link SMTPMessage} for the inclusion of a DKIM signature.
  * 
  * @author Torsten Krause (tk at markenwerk dot net)
  * @author Florian Sager
