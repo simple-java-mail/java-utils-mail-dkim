@@ -15,7 +15,7 @@ This library allows you to
  - sign MIME Messages according to the DKIM standard,
  - check, whether the DNS resource record for a sending domain is prepared correctly for DKIM.
 
-This library is hosted in the [Maven Central Repositoy](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim). You can use it with the following coordinates:
+This library is hosted in the [Maven Central Repository](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim). You can use it with the following coordinates:
 
 ```xml
 <dependency>
@@ -74,7 +74,7 @@ vixQNmunxkdaqHCLuQIDAQAB
 -----END PUBLIC KEY-----
 ```
 
-The content of the DNS resource receord consists of a set of keys and values, where a typical DNS resource receord has values for following keys:
+The content of the DNS resource record consists of a set of keys and values, where a typical DNS resource record has values for following keys:
 
  - v: The DKIM version, currently `DKIM1`.
  - g: The DKIM granularity, used to restrict the allowed sender identities, usualy `*`. 
