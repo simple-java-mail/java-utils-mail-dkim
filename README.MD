@@ -15,7 +15,7 @@ This library allows you to
  - sign MIME Messages according to the DKIM standard,
  - check, whether the DNS resource record for a sending domain is prepared correctly for DKIM.
 
-This library is hosted in the [Maven Central Repositoy](http://search.maven.org/#artifactdetails|net.markenwerk|utils-mail-dkim|1.1.3|jar). You can use it with the following coordinates:
+This library is hosted in the [Maven Central Repositoy](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim). You can use it with the following coordinates:
 
 ```xml
 <dependency>
@@ -25,7 +25,7 @@ This library is hosted in the [Maven Central Repositoy](http://search.maven.org/
 </dependency>
 ```
 
-Consult the [usage description](#usage) and [Javadoc](http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.3/index.html) for further information.
+Consult the [usage description](#usage) and [Javadoc](http://markenwerk.github.io/java-utils-mail-dkim/index.html) for further information.
 
 
 ## Origin and state
