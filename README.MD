@@ -3,6 +3,8 @@
 [![Build Status](https://travis-ci.org/markenwerk/java-utils-mail-dkim.svg?branch=master)](https://travis-ci.org/markenwerk/java-utils-mail-dkim)
 [![Dependency Status](https://www.versioneye.com/user/projects/562bcd8b36d0ab0019001131/badge.svg)](https://www.versioneye.com/user/projects/562bcd8b36d0ab0019001131)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim)
+[![Java SE 6](https://img.shields.io/badge/java-SE_6-brightgreen.svg)](http://docs.oracle.com/javase/6/docs/api/)
+[![LGPL 3.0 License](https://img.shields.io/badge/license-LGPL_3.0-brightgreen.svg)](https://github.com/markenwerk/java-utils-mail-dkim/blob/master/LICENSE)
 
 This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [JavaMail](http://www.oracle.com/technetwork/java/javamail/index.html).
 
@@ -13,17 +15,17 @@ This library allows you to
  - sign MIME Messages according to the DKIM standard,
  - check, whether the DNS resource record for a sending domain is prepared correctly for DKIM.
 
-This library is hosted in the [Maven Central Repositoy](http://search.maven.org/#artifactdetails|net.markenwerk|utils-mail-dkim|1.1.3|jar). You can use it with the following coordinates:
+This library is hosted in the [Maven Central Repository](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim). You can use it with the following coordinates:
 
 ```xml
 <dependency>
 	<groupId>net.markenwerk</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>1.1.3</version>
+	<version>1.1.4</version>
 </dependency>
 ```
 
-Consult the [usage description](#usage) and [Javadoc](http://markenwerk.github.io/java-utils-mail-dkim/javadoc/1.1.3/index.html) for further information.
+Consult the [usage description](#usage) and [Javadoc](http://markenwerk.github.io/java-utils-mail-dkim/index.html) for further information.
 
 
 ## Origin and state
@@ -72,7 +74,7 @@ vixQNmunxkdaqHCLuQIDAQAB
 -----END PUBLIC KEY-----
 ```
 
-The content of the DNS resource receord consists of a set of keys and values, where a typical DNS resource receord has values for following keys:
+The content of the DNS resource record consists of a set of keys and values, where a typical DNS resource record has values for following keys:
 
  - v: The DKIM version, currently `DKIM1`.
  - g: The DKIM granularity, used to restrict the allowed sender identities, usualy `*`. 
@@ -136,11 +138,12 @@ DomainKey domainKey = DomainKeyUtil.getDomainKey(signingDomain, selector);
 domainKey.check(from, getDkimPrivateKeyFileForSender(from));
 ```
 
-[DkimAcceptanceException]: http://static.javadoc.io/net.markenwerk/utils-mail-dkim/1.1.3/index.html?net/markenwerk/utils/mail/dkim/DkimAcceptanceException.html
-[DkimMessage]: http://static.javadoc.io/net.markenwerk/utils-mail-dkim/1.1.3/index.html?net/markenwerk/utils/mail/dkim/DkimMessage.html
-[DkimSigner]: http://static.javadoc.io/net.markenwerk/utils-mail-dkim/1.1.3/index.html?net/markenwerk/utils/mail/dkim/DkimSigner.html
-[DomainKeyUtil]: http://static.javadoc.io/net.markenwerk/utils-mail-dkim/1.1.3/index.html?net/markenwerk/utils/mail/dkim/DomainKeyUtil.html
+[DkimAcceptanceException]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DkimAcceptanceException.html
+[DkimMessage]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DkimMessage.html
+[DkimSigner]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DkimSigner.html
+[DomainKeyUtil]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DomainKeyUtil.html
 
 [MimeMessage]: http://javamail.java.net/nonav/docs/api/index.html?javax/mail/internet/MimeMessage.html
-[RSAPrivateKey]: http://docs.oracle.com/javase/7/docs/api/index.html?java/security/interfaces/RSAPrivateKey.html
 [Session]: http://javamail.java.net/nonav/docs/api/index.html?javax/mail/Session.html
+
+[RSAPrivateKey]: http://docs.oracle.com/javase/8/docs/api/index.html?java/security/interfaces/RSAPrivateKey.html
