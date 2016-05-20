@@ -79,7 +79,7 @@ import com.sun.mail.util.CRLFOutputStream;
 import com.sun.mail.util.QPEncoderStream;
 import net.iharder.Base64;
 
-import net.markenwerk.utils.data.fetcher.BufferedByteFetcher;
+import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
 
 /**
  * Main class providing a signature according to DKIM RFC 4871.
@@ -199,7 +199,8 @@ public class DkimSigner {
 	 *            The selector to be used.
 	 * @param derStream
 	 *            A {@link InputStream} that yields the DER encoded RSA private
-	 *            key to be used.
+	 *            key to be used. The {@link InputStream} will be closed after
+	 *            it has been read.
 	 * 
 	 * @throws IOException
 	 *             If reading the content of the given {@link InputStream}
@@ -214,7 +215,7 @@ public class DkimSigner {
 	 */
 	public DkimSigner(String signingDomain, String selector, InputStream derStream) throws IOException,
 			NoSuchAlgorithmException, InvalidKeySpecException {
-		byte[] privKeyBytes = new BufferedByteFetcher().fetch(derStream);
+		byte[] privKeyBytes = new BufferedDataFetcher().fetch(derStream, true);
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privKeyBytes);
 		RSAPrivateKey privKey = (RSAPrivateKey) keyFactory.generatePrivate(privSpec);

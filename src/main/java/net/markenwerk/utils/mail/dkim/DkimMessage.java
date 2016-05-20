@@ -56,7 +56,7 @@ import javax.mail.internet.MimeUtility;
 
 import com.sun.mail.smtp.SMTPMessage;
 
-import net.markenwerk.utils.data.fetcher.BufferedByteFetcher;
+import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
 
 /**
  * Extension of {@link SMTPMessage} for the inclusion of a DKIM signature.
@@ -127,7 +127,7 @@ public class DkimMessage extends SMTPMessage {
 			encodingOutputStream.close();
 		} else if (null == content) {
 			// write the provided contentStream into the bodyBuffer
-			new BufferedByteFetcher().copy(getContentStream(), bodyBuffer, true, false);
+			new BufferedDataFetcher().copy(getContentStream(), bodyBuffer, true, false);
 			bodyBuffer.flush();
 			bodyBuffer.close();
 		} else {
