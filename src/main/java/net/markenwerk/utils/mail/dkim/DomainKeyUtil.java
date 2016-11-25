@@ -45,15 +45,14 @@
  */
 package net.markenwerk.utils.mail.dkim;
 
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Map;
-
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * @author Torsten Krause (tk at markenwerk dot net)
@@ -147,7 +146,10 @@ public final class DomainKeyUtil {
 
 	private static Map<Character, String> getTags(String recordName) throws DkimException {
 		Map<Character, String> tags = new HashMap<Character, String>();
-		for (String tag : getValue(recordName).split(";")) {
+
+        String unquotedRecordValue = unquoteRecordValue(getValue(recordName));
+
+		for (String tag : unquotedRecordValue.split(";")) {
 			try {
 				tag = tag.trim();
 				tags.put(tag.charAt(0), tag.substring(2));
@@ -157,6 +159,23 @@ public final class DomainKeyUtil {
 		}
 		return tags;
 	}
+
+    /**
+     * Unquote a recordValue string.
+     *
+     * @param recordValue
+     *            Domain record value.
+     * @return Domain record value unquoted.
+     */
+    private static String unquoteRecordValue(String recordValue) {
+
+        if (recordValue != null && ((recordValue.startsWith("\"") && recordValue.endsWith("\""))
+                || (recordValue.startsWith("'") && recordValue.endsWith("'")))) {
+
+            recordValue = recordValue.substring(1, recordValue.length() - 1);
+        }
+        return recordValue;
+    }
 
 	/**
 	 * Retrieves the raw domain key for the given signing domain and selector.
