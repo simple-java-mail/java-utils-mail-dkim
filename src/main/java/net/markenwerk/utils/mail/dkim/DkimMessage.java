@@ -157,6 +157,11 @@ public class DkimMessage extends SMTPMessage {
 		os.flush();
 	}
 
+	/**
+	 * Returns the encoded body.
+	 * 
+	 * @return The encoded body.
+	 */
 	protected String getEncodedBody() {
 		return encodedBody;
 	}

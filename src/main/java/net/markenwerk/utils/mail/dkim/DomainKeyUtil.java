@@ -94,19 +94,18 @@ public final class DomainKeyUtil {
 	}
 
 	/**
-	 * Retrieves the {@link DomainKey} for the given signing domain and
-	 * selector.
+	 * Retrieves the {@link DomainKey} for the given signing domain and selector.
 	 * 
 	 * @param signingDomain
-	 *            The signing domain.
+	 *           The signing domain.
 	 * @param selector
-	 *            The selector.
+	 *           The selector.
 	 * @return The retrieved {@link DomainKey}.
 	 * @throws DkimException
-	 *             If the domain key couldn't be retrieved or if either the
-	 *             version, key type or service type given in the tags is
-	 *             incompatible to this library ('DKIM1', 'RSA' and 'email'
-	 *             respectively).
+	 *            If the domain key couldn't be retrieved or if either the
+	 *            version, key type or service type given in the tags of the
+	 *            retrieved domain key is incompatible to this library ('DKIM1',
+	 *            'RSA' and 'email' respectively).
 	 */
 	public static synchronized DomainKey getDomainKey(String signingDomain, String selector) throws DkimException {
 		return getDomainKey(getRecordName(signingDomain, selector));

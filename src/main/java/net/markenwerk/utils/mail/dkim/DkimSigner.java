@@ -433,7 +433,16 @@ public class DkimSigner {
 		this.checkDomainKey = checkDomainKey;
 	}
 
-	protected String sign(DkimMessage message) throws DkimAcceptanceException, DkimSigningException {
+	/**
+	 * Returns the DKIM signature header line.
+	 * 
+	 * @param message
+	 *           The {@link DkimMessage} to sign.
+	 * @return The DKIM signature header line
+	 * @throws DkimSigningException
+	 *            If the given {@link DkimMessage} couldnt't be signed.
+	 */
+	protected String sign(DkimMessage message) throws DkimSigningException {
 
 		if (checkDomainKey) {
 			try {
