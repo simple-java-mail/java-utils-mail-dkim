@@ -21,7 +21,7 @@ This library is hosted in the [Maven Central Repository](https://maven-badges.he
 <dependency>
 	<groupId>net.markenwerk</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>1.1.8</version>
+	<version>1.1.9</version>
 </dependency>
 ```
 
