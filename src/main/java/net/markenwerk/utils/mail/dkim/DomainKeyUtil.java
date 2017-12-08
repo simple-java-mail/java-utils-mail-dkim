@@ -45,6 +45,7 @@
  */
 package net.markenwerk.utils.mail.dkim;
 
+import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
@@ -201,8 +202,14 @@ public final class DomainKeyUtil {
 				throw new DkimException("There is no TXT record available for " + recordName);
 			}
 
-			String value = (String) txtRecord.get();
-			if (null == value) {
+			StringBuilder builder = new StringBuilder();
+			NamingEnumeration e = txtRecord.getAll();
+			while (e.hasMore()) {
+				builder.append((String) e.next());
+			}
+
+			String value = builder.toString();
+			if (value.isEmpty()) {
 				throw new DkimException("Value of RR " + recordName + " couldn't be retrieved");
 			}
 			return value;
