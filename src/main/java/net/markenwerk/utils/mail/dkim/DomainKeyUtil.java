@@ -45,15 +45,16 @@
  */
 package net.markenwerk.utils.mail.dkim;
 
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Map;
 
 /**
  * @author Torsten Krause (tk at markenwerk dot net)
@@ -72,8 +73,7 @@ public final class DomainKeyUtil {
 	}
 
 	/**
-	 * Returns the configured TTL (time to live) for retrieved {@link DomainKey}
-	 * s.
+	 * Returns the configured TTL (time to live) for retrieved {@link DomainKey} s.
 	 * 
 	 * @return The configured TTL for retrieved {@link DomainKey}s.
 	 */
@@ -98,15 +98,15 @@ public final class DomainKeyUtil {
 	 * Retrieves the {@link DomainKey} for the given signing domain and selector.
 	 * 
 	 * @param signingDomain
-	 *           The signing domain.
+	 *            The signing domain.
 	 * @param selector
-	 *           The selector.
+	 *            The selector.
 	 * @return The retrieved {@link DomainKey}.
 	 * @throws DkimException
-	 *            If the domain key couldn't be retrieved or if either the
-	 *            version, key type or service type given in the tags of the
-	 *            retrieved domain key is incompatible to this library ('DKIM1',
-	 *            'RSA' and 'email' respectively).
+	 *             If the domain key couldn't be retrieved or if either the version,
+	 *             key type or service type given in the tags of the retrieved
+	 *             domain key is incompatible to this library ('DKIM1', 'RSA' and
+	 *             'email' respectively).
 	 */
 	public static synchronized DomainKey getDomainKey(String signingDomain, String selector) throws DkimException {
 		return getDomainKey(getRecordName(signingDomain, selector));
@@ -129,8 +129,7 @@ public final class DomainKeyUtil {
 	}
 
 	/**
-	 * Retrieves the tags of a domain key for the given signing domain and
-	 * selector.
+	 * Retrieves the tags of a domain key for the given signing domain and selector.
 	 * 
 	 * @param signingDomain
 	 *            The signing domain.
@@ -147,7 +146,7 @@ public final class DomainKeyUtil {
 	private static Map<Character, String> getTags(String recordName) throws DkimException {
 		Map<Character, String> tags = new HashMap<Character, String>();
 
-        String unquotedRecordValue = unquoteRecordValue(getValue(recordName));
+		String unquotedRecordValue = unquoteRecordValue(getValue(recordName));
 
 		for (String tag : unquotedRecordValue.split(";")) {
 			try {
@@ -160,22 +159,22 @@ public final class DomainKeyUtil {
 		return tags;
 	}
 
-    /**
-     * Unquote a recordValue string.
-     *
-     * @param recordValue
-     *            Domain record value.
-     * @return Domain record value unquoted.
-     */
-    private static String unquoteRecordValue(String recordValue) {
+	/**
+	 * Unquote a recordValue string.
+	 *
+	 * @param recordValue
+	 *            Domain record value.
+	 * @return Domain record value unquoted.
+	 */
+	private static String unquoteRecordValue(String recordValue) {
 
-        if (recordValue != null && ((recordValue.startsWith("\"") && recordValue.endsWith("\""))
-                || (recordValue.startsWith("'") && recordValue.endsWith("'")))) {
+		if (recordValue != null && ((recordValue.startsWith("\"") && recordValue.endsWith("\""))
+				|| (recordValue.startsWith("'") && recordValue.endsWith("'")))) {
 
-            recordValue = recordValue.substring(1, recordValue.length() - 1);
-        }
-        return recordValue;
-    }
+			recordValue = recordValue.substring(1, recordValue.length() - 1);
+		}
+		return recordValue;
+	}
 
 	/**
 	 * Retrieves the raw domain key for the given signing domain and selector.
@@ -203,7 +202,7 @@ public final class DomainKeyUtil {
 			}
 
 			StringBuilder builder = new StringBuilder();
-			NamingEnumeration e = txtRecord.getAll();
+			NamingEnumeration<?> e = txtRecord.getAll();
 			while (e.hasMore()) {
 				builder.append((String) e.next());
 			}

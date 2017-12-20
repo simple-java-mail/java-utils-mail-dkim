@@ -144,7 +144,6 @@ public class DkimMessage extends SMTPMessage {
 
 		// write the 'DKIM-Signature' header, all other headers and a clear \r\n
 		writeln(os, signatureHeaderLine);
-		@SuppressWarnings("unchecked")
 		Enumeration<String> headerLines = getNonMatchingHeaderLines(ignoreList);
 		while (headerLines.hasMoreElements()) {
 			writeln(os, headerLines.nextElement());

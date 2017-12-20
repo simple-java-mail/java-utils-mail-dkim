@@ -476,7 +476,6 @@ public class DkimSigner {
 		StringBuffer zParamString = new StringBuffer();
 
 		try {
-			@SuppressWarnings("unchecked")
 			Enumeration<Header> headerLines = message.getAllHeaders();
 			while (headerLines.hasMoreElements()) {
 				Header header = (Header) headerLines.nextElement();
