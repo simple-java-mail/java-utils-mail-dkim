@@ -70,12 +70,12 @@ public enum Canonicalization {
 			}
 
 			// The body must end with \r\n
-			if (!"\r\n".equals(body.substring(body.length() - 2, body.length()))) {
+			if (!body.endsWith("\r\n")) {
 				return body + "\r\n";
 			}
 
 			// Remove trailing empty lines ...
-			while ("\r\n\r\n".equals(body.substring(body.length() - 4, body.length()))) {
+			while (body.endsWith("\r\n\r\n")) {
 				body = body.substring(0, body.length() - 2);
 			}
 
@@ -104,12 +104,12 @@ public enum Canonicalization {
 			body = body.replaceAll(" \r\n", "\r\n");
 
 			// The body must end with \r\n
-			if (!"\r\n".equals(body.substring(body.length() - 2, body.length()))) {
+			if (!body.endsWith("\r\n")) {
 				return body + "\r\n";
 			}
 
 			// Remove trailing empty lines ...
-			while ("\r\n\r\n".equals(body.substring(body.length() - 4, body.length()))) {
+			while (body.endsWith("\r\n\r\n")) {
 				body = body.substring(0, body.length() - 2);
 			}
 
