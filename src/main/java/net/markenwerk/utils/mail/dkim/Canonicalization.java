@@ -91,7 +91,7 @@ public enum Canonicalization {
 		public String canonicalizeHeader(String name, String value) {
 			name = name.trim().toLowerCase();
 			value = value.replaceAll("\\s+", " ").trim();
-			return name + ": " + value;
+			return name + ":" + value;
 		}
 
 		public String canonicalizeBody(String body) {
