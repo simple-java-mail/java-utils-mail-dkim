@@ -48,6 +48,8 @@ package net.markenwerk.utils.mail.dkim;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -64,6 +66,8 @@ import javax.naming.directory.InitialDirContext;
 public final class DomainKeyUtil {
 
 	private static final Map<String, DomainKey> CACHE = new HashMap<String, DomainKey>();
+	
+	private static final Pattern RECORD_PATTERN = Pattern.compile("(?:\"(.*?)\"(?: |$))|(?:'(.*?)'(?: |$))|(?:(.*?)(?: |$))");
 
 	private static final long DEFAULT_CACHE_TTL = 2 * 60 * 60 * 1000;
 
@@ -160,20 +164,32 @@ public final class DomainKeyUtil {
 	}
 
 	/**
-	 * Unquote a recordValue string.
+	 * Unquote a recordValue string. The Java DNS provider does something very odd. In the instance there are multiple entries for the TXT record, the first is quoted
+	 * however the second is unquoted. That makes removing quotes difficult. In the normal case, we should be a "\" \"" string, however,
+	 * as confirmed in actual records, the last item may not be quoted. This seems to happen if there are no spaces.
 	 *
 	 * @param recordValue
 	 *            Domain record value.
 	 * @return Domain record value unquoted.
 	 */
 	private static String unquoteRecordValue(String recordValue) {
-
-		if (recordValue != null && ((recordValue.startsWith("\"") && recordValue.endsWith("\""))
-				|| (recordValue.startsWith("'") && recordValue.endsWith("'")))) {
-
-			recordValue = recordValue.substring(1, recordValue.length() - 1);
+		// Iterate over each of the individual records to remove the quote. This will have the effect of removing all spaces from the record. 
+		StringBuffer output = new StringBuffer();
+		
+		Matcher recordMatcher = RECORD_PATTERN.matcher(recordValue);
+		
+		while (recordMatcher.find()) {
+			for (int i=1; i<=recordMatcher.groupCount(); i++) {
+				String val = recordMatcher.group(i);
+				if (null != val) output.append(val);
+			}
 		}
-		return recordValue;
+		
+		String rv = output.toString();
+		if (null == rv | 0 == rv.length()) {
+			throw new DkimException("Unable to parse DKIM record");
+		}
+		return rv;
 	}
 
 	/**
