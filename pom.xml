@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.markenwerk</groupId>
@@ -53,6 +54,7 @@
 		<project.identifier>markenwerk/java-${project.artifactId}</project.identifier>
 		<urls.travis>https://travis-ci.org/${project.identifier}</urls.travis>
 		<urls.github>https://github.com/${project.identifier}</urls.github>
+		<scm.comment>Javadoc for ${project.artifactId}:${project.version}</scm.comment>
 		<connections.github>scm:git:github:${project.identifier}.git</connections.github>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.6</maven.compiler.source>
@@ -248,11 +250,10 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-scm-publish-plugin</artifactId>
-						<version>1.1</version>
+						<version>3.0.0</version>
 						<configuration>
 							<checkoutDirectory>${project.build.directory}/gh-pages</checkoutDirectory>
-							<checkinComment>Javadoc for
-								${project.artifactId}:${project.version}</checkinComment>
+							<checkinComment>${scm.comment}</checkinComment>
 							<content>${project.build.directory}/apidocs</content>
 							<siteOutputEncoding>UTF-8</siteOutputEncoding>
 							<skipDeletedFiles>false</skipDeletedFiles>
