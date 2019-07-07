@@ -5,7 +5,7 @@
 [![Java SE 6](https://img.shields.io/badge/java-SE_6-brightgreen.svg)](http://docs.oracle.com/javase/6/docs/api/)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache_2.0-brightgreen.svg)](https://github.com/markenwerk/java-utils-mail-dkim/blob/master/LICENSE)
 
-This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [JavaMail](http://www.oracle.com/technetwork/java/javamail/index.html).
+This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [JavaMail](https://javaee.github.io/javamail/).
 
 ## Overview
 
