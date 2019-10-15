@@ -1,0 +1,28 @@
+DKIM-Signature: v=1; a=rsa-sha1; q=dns/txt; c=simple/simple; t=1000000; s=dkim1;
+	d=example.com;
+	h=Date:From:To:Message-ID:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding;
+	l=956; bh=UuRTNSSuDPkwmIP2IloFRBx+06c=;
+	b=NlOA5g/AJeTg+IQSK7P5zB61VcPM5RyzhcaFQAq6gakojfkm3kvofMsbSxOhpJ8f
+	MYcRgFM+dhGNcPCKIJTzRn799qDTXevvU79/BePoujk9p/LKS6hed9O6f3G3ytXC6BN
+	BmtnGvFBj0na+XbZYjDKC0ctnb+Flz1WJXzb+1tU=
+Date: Mon, 12 Jan 1970 22:46:40 +0900 (JST)
+From: support@example.com
+To: test@exapmle.com
+Message-ID: <msgid@exapmle.com>
+Subject: Title
+MIME-Version: 1.0
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+ R4%u	ToiA/ oKegpe8].pFuI  0B,N	D&&2Ecm+HI9}@$ [:4/)Ya8 Jd3}x/^ld-aM2?'sG4[~:@ExfRRC6OXS4dU,;mW}y67d} 2h/TWiEGr$b,EnylZ48*/?TFst6YVku=fs&jh?	{+g_Oz|f)r"t1-=4e)C:;P=Yqu`q &:./1nhgAkCJ&Yz[jz>{u
+zf1WP4Xg:7o(8i/B#c<-4f#M}thfKs/3m^/|`FkvfrK
+;:Yt\al{VN =p@sN\%GUIl^n	O% E{SY.}AkG3J*fPQKa=Z/xbxl%dcNA*I`3]S T9S#+5@Ge\! RT=f>rupN;D:n=bFXa>OkQ~+|<>v Yr{3'/n^V:#b@~[{
+R^;~/l~Lh?
+F`y?+>(#:iD[8w\pe
+o3A/QUa"i	:~Mf%|XIS&2$q3DfR{l@1dfy^(i%+1Z}Z\J3ZWdIc*#yF*%hT)~mUg{xkz Sup`Fc|/4uxyP5 .<>Y%x%TRCE30J6hj3bv`YqrC$;<Oy |UR4Pi3_^6|H04-Z1Km fc0*.=Y{YH-n&dL/ohf'D|>.r_><fFhP]JWi%\mJAjb@WKC> ;j+9[)OH2B;VW@cW!%/1.J?VdBJP~k;cS'4X&Mw!@}qP
+8m)Kcx[h
+f+5b!I
+:j+17Q7]YjG7+@rYNJIZI',0dXHVg&z5!~@F)E%_S:8=Ax^lUCAbxW3Ls^ vSB/V
+N>1KO#evx;#ml&*Qo_vYKVf{9$q>Z`&s/db;(fb	H$maIrEWjoJkO*QBtl@37k/%KtX*X5IVv0ZlB<D}ooE2MStRyHA#]\NcI+ o>7DsJ.
+bDP31="u-cB pH]`W_K%e:=SIHS5B$IK#1+X
+]Um$1fn=gG$N NNCOWg-`.6qq2p'f|z@-]zMYYE.!(5"leT
