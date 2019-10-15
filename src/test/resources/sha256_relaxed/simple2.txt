@@ -1,0 +1,19 @@
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1000000;
+	s=dkim1; d=example.com;
+	h=Date:From:To:Message-ID:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding;
+	l=18; bh=tAVPN8/oO0U4lFb1oY16RXDcrZXFf043oBsDf6dbhfs=;
+	b=fsTAWBp8nEjfgaIvIbGjcZxBl434DJra/KT8IgiXYZn/PG8CTsYHz9tLC42ccBxw
+	Kt5MZsYhJk4a/0kEmOF0iWe5xdqGnmX5KHZ93j1u3n/+bfa6AoHkYpQr/pJei2NFMkX
+	Py1pbzISpo3WzfG0HwYuGcXkxVq1O9GfcUZYkSzU=
+Date: Mon, 12 Jan 1970 22:46:40 +0900 (JST)
+From: support@example.com
+To: test@exapmle.com
+Message-ID: <msgid@exapmle.com>
+Subject: Title
+MIME-Version: 1.0
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+test
+test
+test
