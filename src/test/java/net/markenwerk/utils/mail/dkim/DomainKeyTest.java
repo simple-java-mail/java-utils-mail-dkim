@@ -1,94 +1,101 @@
 package net.markenwerk.utils.mail.dkim;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.junit.Test;
 
 import javax.mail.Message;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.junit.Test;
+
+import net.iharder.Base64;
+
 public class DomainKeyTest {
 
+	private static final String EXAMPLE_DOMAIN_KEY = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDwIRP/UC3SBsEmGqZ9ZJW3/DkMoGeLnQg1fWn7/zYtIxN2SnFCjxOCKG9v3b4jYfcTNh5ijSsq631uBItLa7od+v/RtdC2UzJ1lWT947qR+Rcac2gbto/NMqJ0fzfVjH4OuKhitdY9tf6mcwGjaNBcWToIMmPSPDdQPNUYckcQ2QIDAQAB";
+
 	/**
-	 * Test a valid record using the example public key from the DKIM spec page
-	 * http://dkim.org/specs/rfc4871-dkimbase.html
+	 * Test a valid record using the example public key from RFC 6376 appendix C
 	 */
 	@Test
-	public void happyCase() {
+	public void checkDomainKeyRecognizesPublicKey() throws Exception {
+
 		Map<Character, String> tags = new HashMap<Character, String>();
 		tags.put('v', "DKIM1");
-		tags.put('p',
-				"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDwIRP/UC3SBsEmGqZ9ZJW3/DkMoGeLnQg1fWn7/zYtIxN2SnFCjxOCKG9v3b4jYfcTNh5ijSsq631uBItLa7od+v/RtdC2UzJ1lWT947qR+Rcac2gbto/NMqJ0fzfVjH4OuKhitdY9tf6mcwGjaNBcWToIMmPSPDdQPNUYckcQ2QIDAQAB");
+		tags.put('p', EXAMPLE_DOMAIN_KEY);
 
-		DomainKey dk = new DomainKey(tags);
-		assertNotNull(dk);
+		DomainKey domainKey = new DomainKey(tags);
+
+		assertNotNull(domainKey);
+		assertArrayEquals(Base64.decode(EXAMPLE_DOMAIN_KEY), domainKey.getPublicKey().getEncoded());
+
 	}
 
 	@Test
 	public void checkHashWithEmptyBody() throws Exception {
-		// SIMPLE
-		// The SHA-1 value (in base64) for an empty body (canonicalized to a "CRLF") is: uoq1oCgLlTqpdDX/iUbLy7J1Wic=
-		assertEquals("SIMPLE SHA-1 with empty body", "uoq1oCgLlTqpdDX/iUbLy7J1Wic=",
-				calculateBodyHash(mkSigner(Canonicalization.SIMPLE, SigningAlgorithm.SHA1_WITH_RSA)));
 
-		// The SHA-256 value is: frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=
-		assertEquals("SIMPLE SHA-256 with empty body", "frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=",
-				calculateBodyHash(mkSigner(Canonicalization.SIMPLE, SigningAlgorithm.SHA256_WITH_RSA)));
+		checkBodyHash("", "empty body");
 
-		// RELAXED
-		// The SHA-1 value (in base64) for an empty body (canonicalized to a null input) is: 2jmj7l5rSw0yVb/vlWAYkK/YBwk=
-		assertEquals("RELAXED SHA-1 with empty body", "2jmj7l5rSw0yVb/vlWAYkK/YBwk=",
-				calculateBodyHash(mkSigner(Canonicalization.RELAXED, SigningAlgorithm.SHA1_WITH_RSA)));
-
-		// The SHA-256 value is: 47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
-		assertEquals("RELAXED SHA-256 with empty body", "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
-				calculateBodyHash(mkSigner(Canonicalization.RELAXED, SigningAlgorithm.SHA256_WITH_RSA)));
 	}
 
-	private DkimSigner mkSigner(Canonicalization canonicalization, SigningAlgorithm algorithm) throws Exception {
-		// signer
-		DkimSigner signer = new DkimSigner("example.com", "dkim1", new File("./src/test/resources/key/dkim.der"));
-		signer.setHeaderCanonicalization(canonicalization);
-		signer.setBodyCanonicalization(canonicalization);
-		signer.setLengthParam(true);
-		signer.setSigningAlgorithm(algorithm);
-		signer.setZParam(false);
-		signer.setCheckDomainKey(false);
+	private void checkBodyHash(String body, String description) throws Exception {
 
-		return signer;
+		for (Canonicalization canonicalization : Canonicalization.values()) {
+			for (SigningAlgorithm algorithm : SigningAlgorithm.values()) {
+				checkBodyHash(canonicalization, algorithm, body, description);
+			}
+		}
 	}
 
-	private String calculateBodyHash(DkimSigner signer) throws Exception {
-		// Session
-		Properties properties=new Properties();
+	private void checkBodyHash(Canonicalization canonicalization, SigningAlgorithm algorithm, String body,
+			String description) throws Exception {
+
+		String configuration = canonicalization.name() + " " + algorithm.getHashNotation().toUpperCase();
+		String expected = Utils.digest(canonicalization.canonicalizeBody(body), algorithm.getHashNotation());
+		String actual = calculateBodyHashWithSigner(Utils.getSigner(canonicalization, algorithm));
+
+		assertEquals(configuration + " / " + description, expected, actual);
+
+	}
+
+	private String calculateBodyHashWithSigner(DkimSigner dkimSigner) throws Exception {
+
+		Properties properties = new Properties();
 		properties.setProperty("mail.smtp.host", "localhost");
-		Session session=Session.getDefaultInstance(properties);
-		// Message
-		MimeMessage message = new MimeMessage(session);
-		message.setRecipient(Message.RecipientType.TO, new InternetAddress("test@exapmle.com"));
-		message.setSubject("Title");
-		message.setFrom("support@example.com");
-		message.setText("", "US-ASCII", "plain");
-		message.setHeader("Content-Transfer-Encoding", "7bit");
-		message.setHeader("Content-Type", "text/plain; charset=\"US-ASCII\"");
-		message.saveChanges();
-		DkimMessage dkimMessage = new DkimMessage(message, signer);
+
+		Session session = Session.getDefaultInstance(properties);
+
+		MimeMessage mimeMessage = new MimeMessage(session);
+		mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("test@exapmle.com"));
+		mimeMessage.setSubject("Title");
+		mimeMessage.setFrom("support@example.com");
+		mimeMessage.setText("", "US-ASCII", "plain");
+		mimeMessage.setHeader("Content-Transfer-Encoding", "7bit");
+		mimeMessage.setHeader("Content-Type", "text/plain; charset=\"US-ASCII\"");
+		mimeMessage.saveChanges();
+
+		DkimMessage dkimMessage = new DkimMessage(mimeMessage, dkimSigner);
 		dkimMessage.writeTo(new ByteArrayOutputStream());
 
-		Pattern pattern = Pattern.compile("bh=(.+?);", Pattern.MULTILINE);
-		Matcher m = pattern.matcher(signer.sign(dkimMessage));
+		String signature = dkimSigner.sign(dkimMessage);
 
-		if(!m.find()) {
+		Pattern pattern = Pattern.compile("bh=(.+?);", Pattern.MULTILINE);
+		Matcher matcher = pattern.matcher(signature);
+
+		if (!matcher.find()) {
 			return "";
 		}
-		return m.group(1);
+
+		return matcher.group(1);
 	}
 }
