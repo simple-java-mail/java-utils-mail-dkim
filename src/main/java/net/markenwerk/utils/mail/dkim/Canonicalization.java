@@ -29,6 +29,16 @@ public enum Canonicalization {
 
 	/**
 	 * The 'simple' canonicalization algorithm.
+	 * Note that a completely empty or missing body is canonicalized as a
+	 *    single "CRLF"; that is, the canonicalized length will be 2 octets.
+	 *
+	 *    The SHA-1 value (in base64) for an empty body (canonicalized to a "CRLF") is:
+	 *
+	 *    uoq1oCgLlTqpdDX/iUbLy7J1Wic=
+	 *
+	 *    The SHA-256 value is:
+	 *
+	 *    frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=
 	 */
 	SIMPLE {
 
@@ -58,6 +68,15 @@ public enum Canonicalization {
 
 	/**
 	 * The 'relaxed' canonicalization algorithm.
+	 *
+	 * The SHA-1 value (in base64) for an empty body (canonicalized to a
+	 *    null input) is:
+	 *
+	 *    2jmj7l5rSw0yVb/vlWAYkK/YBwk=
+	 *
+	 *    The SHA-256 value is:
+	 *
+	 *    47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
 	 */
 	RELAXED {
 
@@ -69,8 +88,8 @@ public enum Canonicalization {
 
 		public String canonicalizeBody(String body) {
 
-			if (body == null || "".equals(body)) {
-				return "\r\n";
+			if (body == null || "".equals(body) || "\r\n".equals(body)) {
+				return "";
 			}
 
 			body = body.replaceAll("[ \\t\\x0B\\f]+", " ");

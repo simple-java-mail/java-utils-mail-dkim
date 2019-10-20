@@ -415,7 +415,7 @@ public class DkimSigner {
 	 * @throws DkimSigningException
 	 *            If the given {@link DkimMessage} couldnt't be signed.
 	 */
-	protected String sign(DkimMessage message) throws DkimSigningException {
+	protected String sign(DkimMessage message) throws MessagingException {
 
 		if (checkDomainKey) {
 			try {
@@ -426,12 +426,16 @@ public class DkimSigner {
 			}
 		}
 
+		// for test purpose
+		Date dt = message.getSentDate();
+		if (dt == null) dt = new Date();
+
 		Map<String, String> dkimSignature = new LinkedHashMap<String, String>();
 		dkimSignature.put("v", "1");
 		dkimSignature.put("a", this.signingAlgorithm.getRfc4871Notation());
 		dkimSignature.put("q", "dns/txt");
 		dkimSignature.put("c", getHeaderCanonicalization().getType() + "/" + getBodyCanonicalization().getType());
-		dkimSignature.put("t", ((long) new Date().getTime() / 1000) + "");
+		dkimSignature.put("t", (dt.getTime() / 1000) + "");
 		dkimSignature.put("s", this.selector);
 		dkimSignature.put("d", this.signingDomain);
 
