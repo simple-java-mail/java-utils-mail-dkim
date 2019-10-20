@@ -77,7 +77,7 @@ public class DkimMessageUnchangedTest {
 
 	private static DkimSigner mkSigner(Canonicalization canonicalization, SigningAlgorithm algorithm) throws Exception {
 		// signer
-		DkimSigner signer = new DkimSigner("example.com", "dkim1", new File("private_key.pk8"));
+		DkimSigner signer = new DkimSigner("example.com", "dkim1", new File("./src/test/resources/key/dkim.der"));
 		signer.setHeaderCanonicalization(canonicalization);
 		signer.setBodyCanonicalization(canonicalization);
 		signer.setLengthParam(true);
