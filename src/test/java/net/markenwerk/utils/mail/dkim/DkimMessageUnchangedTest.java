@@ -5,6 +5,8 @@ import java.util.*;
 
 import javax.mail.*;
 import javax.mail.internet.*;
+
+import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 
@@ -57,6 +59,11 @@ public class DkimMessageUnchangedTest {
             Utils.write(new File("./src/test/resources/body", "random"+(i+1)+".txt"), body.getBytes());
         }
     }
+    
+    @Before
+	public void fixateSystemTimeZone() {
+		System.setProperty("user.timezone", "JST");
+	}
 
 	@Test
 	public void testCreatingSameMessageAsBefore() throws Exception {
