@@ -25,7 +25,7 @@ public class DkimMessageTest {
 	 * message".
 	 */
 	public static void main(String[] args) throws Exception {
-		System.setProperty("user.timezone", "JST");
+		System.setProperty("user.timezone", "UTC");
 		createRandomBodies();
 		createSignedMessages();
 	}
@@ -60,7 +60,7 @@ public class DkimMessageTest {
 
 	@Before
 	public void fixateSystemTimeZone() {
-		System.setProperty("user.timezone", "JST");
+		System.setProperty("user.timezone", "UTC");
 	}
 
 	@Test
