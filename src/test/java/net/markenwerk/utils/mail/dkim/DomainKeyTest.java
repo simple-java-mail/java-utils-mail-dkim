@@ -10,13 +10,10 @@ import java.util.regex.Pattern;
 
 import org.junit.Test;
 
-import javax.mail.Header;
 import javax.mail.Message;
-import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 
 public class DomainKeyTest {
 
