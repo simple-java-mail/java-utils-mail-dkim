@@ -38,6 +38,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -454,23 +455,28 @@ public class DkimSigner {
 
 		try {
 			Enumeration<Header> headerLines = message.getAllHeaders();
+			List<Header> reverseOrderHeaderLines = new LinkedList<Header>();
+			
 			while (headerLines.hasMoreElements()) {
 				Header header = (Header) headerLines.nextElement();
-
-				String headerName = header.getName();
-				if (headersToSign.contains(headerName)) {
-					String headerValue = header.getValue();
-					headerList.append(headerName).append(":");
-					headerContent.append(headerCanonicalization.canonicalizeHeader(headerName, headerValue));
-					headerContent.append("\r\n");
-					assureHeaders.remove(headerName);
-					if (zParam) {
-						zParamString.append(headerName);
-						zParamString.append(":");
-						zParamString.append(quotedPrintable(headerValue.trim()).replace("|", "=7C"));
-						zParamString.append("|");
-					}
+				if (headersToSign.contains(header.getName())) {
+					reverseOrderHeaderLines.add(0, header);
 				}
+			}
+
+			for(Header header : reverseOrderHeaderLines) {
+				String headerName = header.getName();
+				String headerValue = header.getValue();
+				headerList.append(headerName).append(":");
+				headerContent.append(headerCanonicalization.canonicalizeHeader(headerName, headerValue));
+				headerContent.append("\r\n");
+				assureHeaders.remove(headerName);
+				if (zParam) {
+					zParamString.append(headerName);
+					zParamString.append(":");
+					zParamString.append(quotedPrintable(headerValue.trim()).replace("|", "=7C"));
+					zParamString.append("|");
+				}		
 			}
 
 			if (!assureHeaders.isEmpty()) {
