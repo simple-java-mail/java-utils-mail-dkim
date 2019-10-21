@@ -48,6 +48,13 @@ public class CannonicalizationTest {
 
 	}
 
+	@Test
+	public void checkRfcexampleBody() throws Exception {
+
+		checkBody(" C \r\nD \t E\r\n\r\n\r\n", " C \r\nD \t E\r\n", " C\r\nD E\r\n", "example body from rfc");
+
+	}
+
 	private void checkBody(String body, String simpleResult, String relaxedResult, String description) {
 
 		checkBody(Canonicalization.SIMPLE, body, simpleResult, description);
