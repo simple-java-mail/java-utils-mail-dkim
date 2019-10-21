@@ -49,7 +49,7 @@ public class CannonicalizationTest {
 	}
 
 	@Test
-	public void checkRfcexampleBody() throws Exception {
+	public void checkRfcExampleBody() throws Exception {
 
 		checkBody(" C \r\nD \t E\r\n\r\n\r\n", " C \r\nD \t E\r\n", " C\r\nD E\r\n", "example body from rfc");
 
