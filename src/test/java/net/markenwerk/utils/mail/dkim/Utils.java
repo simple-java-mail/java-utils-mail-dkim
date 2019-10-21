@@ -28,11 +28,11 @@ class Utils {
 			} else if (v == 2) {
 				c = ' ';
 			} else if (v == 3) {
-				c = '\f';
-			} else if (v == 4) {
-				c = '\b';
-			} else if (v == 5) {
-				c = '\t';
+                c = '\f'; // vertical tab
+            } else if (v == 4) {
+                c = '\u000b'; // form feed
+            } else if (v == 5) {
+                c = '\t'; // horizontal tab
 			} else {
 				c = (char) (v - 6 + 0x20); // [0x20, 0x7f]
 			}
