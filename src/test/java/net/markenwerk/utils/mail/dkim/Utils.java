@@ -22,17 +22,17 @@ class Utils {
 			int v = random.nextInt(0x60 + 6); // [0x20, 0x7f] + ctrl*6
 			char c;
 			if (v == 0) {
-				c = '\r';
+				c = '\r'; // carriage return
 			} else if (v == 1) {
-				c = '\n';
+				c = '\n'; // line feed
 			} else if (v == 2) {
-				c = ' ';
+				c = ' '; // space
 			} else if (v == 3) {
-                c = '\f'; // vertical tab
-            } else if (v == 4) {
-                c = '\u000b'; // form feed
-            } else if (v == 5) {
-                c = '\t'; // horizontal tab
+				c = '\f'; // vertical tab
+			} else if (v == 4) {
+				c = '\u000b'; // form feed
+			} else if (v == 5) {
+				c = '\t'; // horizontal tab
 			} else {
 				c = (char) (v - 6 + 0x20); // [0x20, 0x7f]
 			}
