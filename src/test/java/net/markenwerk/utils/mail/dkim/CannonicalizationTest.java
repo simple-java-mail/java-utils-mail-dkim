@@ -21,21 +21,30 @@ public class CannonicalizationTest {
 	}
 
 	@Test
-	public void checkSpaceOnlyBody() throws Exception {
+	public void checkWhitespaceOnlyBody() throws Exception {
 
-		checkBody(" \t", " \t\r\n", "", "space only body");
-		checkBody(" \t\f\u000b \t",
-                " \t\f\u000b \t\r\n",   // all spaces are preserved
-                " \f\u000b\r\n",       // SP's and HT's are reduced to one SP, SP's at line end is removed, form feeds and VT's are preserved
-                "reducing space of relaxed's algorithm ignores form feeds and vertical tabs"
-        );
+		checkBody(" \t", " \t\r\n", "", "whitespace-only body");
+
+	}
+
+	@Test
+	public void checkCharactersWithinWhitespaceOnlyBody() throws Exception {
+
+		checkBody(" \tXY \t", " \tXY \t\r\n", " XY\r\n", "characters within whitespace");
+
+	}
+
+	@Test
+	public void checkControlCharactersWithinWhitespaceOnlyBody() throws Exception {
+
+		checkBody(" \t\f\u000b \t", " \t\f\u000b \t\r\n", " \f\u000b\r\n", "control characters within whitespace");
 
 	}
 
 	@Test
 	public void checkSpaceAndCRLFBody() throws Exception {
 
-		checkBody(" \t\r\n \t", " \t\r\n \t\r\n", "", "space and crlf only body");
+		checkBody(" \t\r\n \t", " \t\r\n \t\r\n", "", "space-and-crlf-only body");
 
 	}
 
