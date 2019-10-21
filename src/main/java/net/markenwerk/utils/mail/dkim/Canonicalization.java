@@ -19,7 +19,7 @@
 package net.markenwerk.utils.mail.dkim;
 
 /**
- * Provides 'simple' and 'relaxed' canonicalization according to RFC 4871.
+ * Provides "simple" and "relaxed" canonicalization according to RFC 4871.
  * 
  * @author Torsten Krause (tk at markenwerk dot net)
  * @author Florian Sager
@@ -28,17 +28,10 @@ package net.markenwerk.utils.mail.dkim;
 public enum Canonicalization {
 
 	/**
-	 * The 'simple' canonicalization algorithm.
-	 * Note that a completely empty or missing body is canonicalized as a
-	 *    single "CRLF"; that is, the canonicalized length will be 2 octets.
-	 *
-	 *    The SHA-1 value (in base64) for an empty body (canonicalized to a "CRLF") is:
-	 *
-	 *    uoq1oCgLlTqpdDX/iUbLy7J1Wic=
-	 *
-	 *    The SHA-256 value is:
-	 *
-	 *    frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=
+	 * The "simple" canonicalization algorithm.
+	 * 
+	 * The body canonicalization algorithm converts *CRLF at the end of the body to
+	 * a single CRLF.
 	 */
 	SIMPLE {
 
@@ -48,98 +41,77 @@ public enum Canonicalization {
 
 		public String canonicalizeBody(String body) {
 
-			if (body == null || "".equals(body)) {
+			// if there is no body, CRLF is returned
+			if (body == null) {
 				return "\r\n";
 			}
 
-			// The body must end with \r\n
+			// if there is no trailing CRLF on the message body, CRLF is added
 			if (!body.endsWith("\r\n")) {
 				return body + "\r\n";
 			}
 
-			// Remove trailing empty lines ...
+			// while there are multiple trailing CRLF on the message body, one is removed
 			while (body.endsWith("\r\n\r\n")) {
 				body = body.substring(0, body.length() - 2);
 			}
 
 			return body;
+
 		}
 	},
 
 	/**
-	 * The 'relaxed' canonicalization algorithm.
-	 *
-	 * The SHA-1 value (in base64) for an empty body (canonicalized to a
-	 *    null input) is:
-	 *
-	 *    2jmj7l5rSw0yVb/vlWAYkK/YBwk=
-	 *
-	 *    The SHA-256 value is:
-	 *
-	 *    47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
+	 * The "relaxed" canonicalization algorithm.
+	 * 
+	 * The body canonicalization algorithm MUST reduce whitespace and ignore all
+	 * empty lines at the end of the message body.
 	 */
 	RELAXED {
 
 		public String canonicalizeHeader(String name, String value) {
-			name = name.trim().toLowerCase();
-			value = value.replaceAll("\\s+", " ").trim();
-			return name + ":" + value;
+			return name.trim().toLowerCase() + ":" + value.replaceAll("\\s+", " ").trim();
 		}
 
 		public String canonicalizeBody(String body) {
 
+			// if there is no body, an empty body is returned
 			if (body == null) {
 				return "";
 			}
 
-            // The body must end with \r\n
-            // this must be called before removing space, otherwise space keeps unremoved if body ends with space.
-            if (!body.endsWith("\r\n")) {
-                body += "\r\n";
-            }
+			// if there is no trailing CRLF on the message body, CRLF is added
+			if (!body.endsWith("\r\n")) {
+				body += "\r\n";
+			}
 
-			body = body.replaceAll("[ \\t]+", " "); // not [ \t\x0B\f]
-			body = body.replaceAll(" \r\n", "\r\n");
+			// ignore all whitespace at the end of lines
+			body = body.replaceAll("[ \\t]+\r\n", "\r\n");
 
-			// Remove trailing empty lines ...
+			// reduce all sequences of whitespace within a line to a single SP character
+			body = body.replaceAll("[ \\t]+", " ");
+
+			// while there are multiple trailing CRLF on the message body, one is removed
 			while (body.endsWith("\r\n\r\n")) {
 				body = body.substring(0, body.length() - 2);
 			}
 
-            // at last, ensure '\r\n' is empty
-            if ("\r\n".equals(body)) {
-                body = "";
-            }
+			// at last, ensure CRLF is empty
+			if ("\r\n".equals(body)) {
+				body = "";
+			}
+
 			return body;
+
 		}
 	};
 
-	/**
-	 * Returns a string representation of the canonicalization algorithm.
-	 * 
-	 * @return The string representation of the canonicalization algorithm.
-	 */
 	public final String getType() {
 		return name().toLowerCase();
 	}
 
-	/**
-	 * Performs header canonicalization.
-	 * 
-	 * @param name
-	 *            The name of the header.
-	 * @param value
-	 *            The value of the header.
-	 * @return The canonicalized header.
-	 */
 	public abstract String canonicalizeHeader(String name, String value);
 
-	/**
-	 * Performs body canonicalization.
-	 * 
-	 * @param body
-	 *            The content of the body.
-	 * @return The canonicalized body.
-	 */
 	public abstract String canonicalizeBody(String body);
+	
 }
