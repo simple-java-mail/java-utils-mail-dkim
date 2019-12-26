@@ -35,7 +35,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -43,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,7 +103,7 @@ public class DkimSigner {
 		DEFAULT_HEADERS_TO_SIGN.add("Sender");
 	}
 
-	private final Set<String> headersToSign = new HashSet<String>(DEFAULT_HEADERS_TO_SIGN);
+	private final Set<String> headersToSign = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
 
 	private SigningAlgorithm signingAlgorithm = SigningAlgorithm.SHA256_WITH_RSA;
 	private Signature signature;
@@ -133,13 +133,14 @@ public class DkimSigner {
 	 *             If the given signing domain is invalid.
 	 */
 	public DkimSigner(String signingDomain, String selector, RSAPrivateKey privateKey) throws DkimException {
+		headersToSign.addAll(DEFAULT_HEADERS_TO_SIGN);
 		initDkimSigner(signingDomain, selector, privateKey);
 	}
 
 	/**
 	 * Created a new {@code DkimSigner} for the given signing domain and
 	 * selector with the given DER encoded RSA private Key.
-	 * 
+	 *
 	 * @param signingDomain
 	 *            The signing domain to be used.
 	 * @param selector
@@ -446,7 +447,8 @@ public class DkimSigner {
 		}
 
 		// process header
-		List<String> assureHeaders = new ArrayList<String>(MIMIMUM_HEADERS_TO_SIGN);
+		Set<String> assureHeaders = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+		assureHeaders.addAll(MIMIMUM_HEADERS_TO_SIGN);
 
 		// intersect defaultHeadersToSign with available headers
 		StringBuffer headerList = new StringBuffer();
@@ -476,15 +478,15 @@ public class DkimSigner {
 					zParamString.append(":");
 					zParamString.append(quotedPrintable(headerValue.trim()).replace("|", "=7C"));
 					zParamString.append("|");
-				}		
+				}
 			}
 
 			if (!assureHeaders.isEmpty()) {
-				throw new DkimSigningException("Could not find the header fields " + concatList(assureHeaders, ", ")
+				throw new DkimSigningException("Could not find the header fields " + concatSet(assureHeaders, ", ")
 						+ " for signing");
 			}
 		} catch (MessagingException e) {
-			throw new DkimSigningException("Could not find the header fields " + concatList(assureHeaders, ", ")
+			throw new DkimSigningException("Could not find the header fields " + concatSet(assureHeaders, ", ")
 					+ " for signing", e);
 		}
 
@@ -595,7 +597,7 @@ public class DkimSigner {
 		return buf.toString();
 	}
 
-	private static String concatList(List<String> assureHeaders, String separator) {
+	private static String concatSet(Set<String> assureHeaders, String separator) {
 		StringBuffer buffer = new StringBuffer();
 		for (String string : assureHeaders) {
 			buffer.append(string);
