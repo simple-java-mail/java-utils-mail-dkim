@@ -100,7 +100,7 @@ public class DkimMessageTest {
 		properties.setProperty("mail.from", "foo@exapmle.com");
 		properties.setProperty("mail.smtp.from", "exapmle.com");
 
-		Session session = Session.getDefaultInstance(properties);
+		Session session = Session.getInstance(properties);
 
 		MimeMessage mimeMessage = new MimeMessage(session) {
 
