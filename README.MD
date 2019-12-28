@@ -75,12 +75,12 @@ vixQNmunxkdaqHCLuQIDAQAB
 
 The content of the DNS resource record consists of a set of keys and values, where a typical DNS resource record has values for following keys:
 
- - v: The DKIM version, currently `DKIM1`.
- - g: The DKIM granularity, used to restrict the allowed sender identities, usualy `*`. 
- - k: The key type, usualy `rsa`.
- - p: The Base64 encoded public key, usualy a RSA public key.
- - s: The allowed service types, usualy `email` or `*`. 
- - t: Some flags used by DKIM validators.
+ - `v`: The DKIM version, currently `DKIM1`.
+ - `g`: The DKIM granularity, used to restrict the allowed sender identities, usualy `*`. 
+ - `k`: The key type, usualy `rsa`.
+ - `p`: The Base64 encoded public key, usualy a RSA public key.
+ - `s`: The allowed service types, usualy `email` or `*`. 
+ - `t`: Some flags used by DKIM validators.
  
 See [section 3.6.1.](https://tools.ietf.org/html/rfc6376#section-3.6.1) of the RFC for further information
 
@@ -123,7 +123,7 @@ private MimeMessage dkimSignMessage(MimeMessage message, String from, String sig
 	dkimSigner.setBodyCanonicalization(Canonicalization.RELAXED);
 	dkimSigner.setSigningAlgorithm(SigningAlgorithm.SHA256_WITH_RSA);
 	dkimSigner.setLengthParam(true);
-	dkimSigner.setZParam(false);
+	dkimSigner.setCopyHeaderFields(false);
 	return new DkimMessage(message, dkimSigner);
 }
 ```
