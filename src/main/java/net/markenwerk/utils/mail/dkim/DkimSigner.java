@@ -67,7 +67,7 @@ public class DkimSigner {
 	private static final String DKIM_SIGNATUR_HEADER = "DKIM-Signature";
 	private static final int MAX_HEADER_LENGTH = 67;
 
-	private static final List<String> MIMIMUM_HEADERS_TO_SIGN = new ArrayList<String>(3);
+	private static final Set<String> MIMIMUM_HEADERS_TO_SIGN = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
 	private static final List<String> DEFAULT_HEADERS_TO_SIGN = new ArrayList<String>(28);
 
 	static {
@@ -133,7 +133,6 @@ public class DkimSigner {
 	 *             If the given signing domain is invalid.
 	 */
 	public DkimSigner(String signingDomain, String selector, RSAPrivateKey privateKey) throws DkimException {
-		headersToSign.addAll(DEFAULT_HEADERS_TO_SIGN);
 		initDkimSigner(signingDomain, selector, privateKey);
 	}
 
@@ -203,6 +202,7 @@ public class DkimSigner {
 			throw new DkimException(signingDomain + " is an invalid signing domain");
 		}
 
+		headersToSign.addAll(DEFAULT_HEADERS_TO_SIGN);
 		this.signingDomain = signingDomain;
 		this.selector = selector.trim();
 		this.privateKey = privkey;
