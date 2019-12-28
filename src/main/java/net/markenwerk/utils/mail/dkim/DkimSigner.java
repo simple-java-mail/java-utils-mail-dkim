@@ -482,10 +482,10 @@ public class DkimSigner {
 		}
 
 		String canonicalBody = canonicalizeBody(message);
-		signatureData.put("bh", base64Encode(messageDigest.digest(canonicalBody.getBytes())));
 		if (lengthParam) {
 			signatureData.put("l", Integer.toString(canonicalBody.length()));
 		}
+		signatureData.put("bh", base64Encode(messageDigest.digest(canonicalBody.getBytes())));
 
 		String serializedSignature = serializeSignature(signatureData);
 		headerValues.append(headerCanonicalization.canonicalizeHeader(DKIM_SIGNATUR_HEADER, serializedSignature));
