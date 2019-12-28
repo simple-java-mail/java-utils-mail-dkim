@@ -63,7 +63,7 @@ class Utils {
 		signer.setBodyCanonicalization(canonicalization);
 		signer.setLengthParam(true);
 		signer.setSigningAlgorithm(algorithm);
-		signer.setZParam(false);
+		signer.setCopyHeaderFields(false);
 		signer.setCheckDomainKey(false);
 
 		return signer;
