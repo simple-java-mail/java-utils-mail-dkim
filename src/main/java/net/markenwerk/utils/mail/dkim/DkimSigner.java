@@ -81,10 +81,10 @@ public class DkimSigner {
    static {
 
       MANDATORY_HEADERS_TO_SIGN.add("From");
-      MANDATORY_HEADERS_TO_SIGN.add("To");
-      MANDATORY_HEADERS_TO_SIGN.add("Subject");
 
       DEFAULT_HEADERS_TO_SIGN.addAll(MANDATORY_HEADERS_TO_SIGN);
+      DEFAULT_HEADERS_TO_SIGN.add("To");
+      DEFAULT_HEADERS_TO_SIGN.add("Subject");
       DEFAULT_HEADERS_TO_SIGN.add("Content-Description");
       DEFAULT_HEADERS_TO_SIGN.add("Content-ID");
       DEFAULT_HEADERS_TO_SIGN.add("Content-Type");
