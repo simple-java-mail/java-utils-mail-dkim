@@ -89,8 +89,8 @@ public class DkimMessageTest {
 	}
 
 	private static String getFolderName(Canonicalization canonicalization, SigningAlgorithm algorithm) {
-		int index = algorithm.getRfc4871Notation().indexOf("-") + 1;
-		return algorithm.getRfc4871Notation().substring(index) + "_" + canonicalization.name().toLowerCase();
+		int index = algorithm.getDkimNotation().indexOf("-") + 1;
+		return algorithm.getDkimNotation().substring(index) + "_" + canonicalization.name().toLowerCase();
 	}
 
 	private static byte[] writeMessage(DkimSigner dkimSigner, String body) throws Exception {

@@ -57,8 +57,8 @@
 		<scm.comment>Javadoc for ${project.artifactId}:${project.version}</scm.comment>
 		<connections.github>scm:git:github:${project.identifier}.git</connections.github>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.6</maven.compiler.source>
-		<maven.compiler.target>1.6</maven.compiler.target>
+		<maven.compiler.source>1.7</maven.compiler.source>
+		<maven.compiler.target>1.7</maven.compiler.target>
 	</properties>
 
 	<dependencies>
@@ -78,6 +78,12 @@
 			<groupId>com.sun.mail</groupId>
 			<artifactId>jakarta.mail</artifactId>
 			<version>1.6.4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.i2p.crypto</groupId>
+			<artifactId>eddsa</artifactId>
+			<version>0.3.0</version>
 		</dependency>
 
 		<dependency>

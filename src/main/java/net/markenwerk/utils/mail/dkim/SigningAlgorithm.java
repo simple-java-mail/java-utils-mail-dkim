@@ -35,17 +35,24 @@ public enum SigningAlgorithm {
 	 */
 	SHA256_WITH_RSA("rsa-sha256", "SHA256withRSA", "sha-256"),
 
-	/**
-	 * The rsa-sha1 signing algorithm.
-	 */
-	SHA1_WITH_RSA("rsa-sha1", "SHA1withRSA", "sha-1");
+   /**
+    * The rsa-sha1 signing algorithm.
+    */
+   SHA1_WITH_RSA("rsa-sha1", "SHA1withRSA", "sha-1"),
+   
+   /**
+    * The rsa-sha1 signing algorithm.
+    */
+   SHA256_WITH_ED25519("ed25519", "NONEwithEdDSA", "sha-256");
 
-	private final String rfc4871Notation;
+	private final String dkimNotation;
+	
 	private final String javaNotation;
+	
 	private final String hashNotation;
 
-	private SigningAlgorithm(String rfc4871Notation, String javaNotation, String hashNotation) {
-		this.rfc4871Notation = rfc4871Notation;
+	private SigningAlgorithm(String dkimNotation, String javaNotation, String hashNotation) {
+		this.dkimNotation = dkimNotation;
 		this.javaNotation = javaNotation;
 		this.hashNotation = hashNotation;
 	}
@@ -55,8 +62,8 @@ public enum SigningAlgorithm {
 	 * 
 	 * @return The signing algorithm notation as used in RFC 4871.
 	 */
-	public String getRfc4871Notation() {
-		return rfc4871Notation;
+	public String getDkimNotation() {
+		return dkimNotation;
 	}
 
 	/**
