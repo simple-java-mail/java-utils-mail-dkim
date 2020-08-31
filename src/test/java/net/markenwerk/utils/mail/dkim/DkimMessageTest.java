@@ -69,7 +69,7 @@ public class DkimMessageTest {
 		for (File file : files) {
 			String body = new String(Utils.read(file));
 			for (Canonicalization canonicalization : Canonicalization.values()) {
-				for (SigningAlgorithm algorithm : SigningAlgorithm.values()) {
+				for (SigningAlgorithm algorithm : new SigningAlgorithm[] {SigningAlgorithm.SHA1_WITH_RSA, SigningAlgorithm.SHA256_WITH_RSA}) {
 					checkCreatesSameMessageAsBefore(canonicalization, algorithm, body, file);
 				}
 			}
