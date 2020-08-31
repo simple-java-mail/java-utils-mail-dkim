@@ -18,8 +18,6 @@
  */
 package net.markenwerk.utils.mail.dkim;
 
-import java.security.MessageDigest;
-
 /**
  * Allowed signing algorithms by RFC 4871 with translation to different Java
  * notations.
@@ -30,58 +28,43 @@ import java.security.MessageDigest;
  */
 public enum SigningAlgorithm {
 
-	/**
-	 * The rsa-sha256 signing algorithm.
-	 */
-	SHA256_WITH_RSA("rsa-sha256", "SHA256withRSA", "sha-256"),
+   /**
+    * The rsa-sha256 signing algorithm.
+    */
+   SHA256_WITH_RSA("rsa-sha256", "SHA256withRSA", "sha-256"),
 
    /**
     * The rsa-sha1 signing algorithm.
     */
    SHA1_WITH_RSA("rsa-sha1", "SHA1withRSA", "sha-1"),
-   
+
    /**
     * The rsa-sha1 signing algorithm.
     */
-   SHA256_WITH_ED25519("ed25519", "NONEwithEdDSA", "sha-256");
+   SHA256_WITH_ED25519("ed25519-sha256", "NONEwithEdDSA", "sha-256");
 
-	private final String dkimNotation;
-	
-	private final String javaNotation;
-	
-	private final String hashNotation;
+   private final String dkimNotation;
 
-	private SigningAlgorithm(String dkimNotation, String javaNotation, String hashNotation) {
-		this.dkimNotation = dkimNotation;
-		this.javaNotation = javaNotation;
-		this.hashNotation = hashNotation;
-	}
+   private final String javaNotation;
 
-	/**
-	 * Returns the signing algorithm notation as used in RFC 4871.
-	 * 
-	 * @return The signing algorithm notation as used in RFC 4871.
-	 */
-	public String getDkimNotation() {
-		return dkimNotation;
-	}
+   private final String hashNotation;
 
-	/**
-	 * Returns the signing algorithm notation as used by the JCE.
-	 * 
-	 * @return The signing algorithm notation as used by the JCE.
-	 */
-	public String getJavaNotation() {
-		return javaNotation;
-	}
+   private SigningAlgorithm(String dkimNotation, String javaNotation, String hashNotation) {
+      this.dkimNotation = dkimNotation;
+      this.javaNotation = javaNotation;
+      this.hashNotation = hashNotation;
+   }
 
-	/**
-	 * Returns the hashing algorithm notation as used by {@link MessageDigest}.
-	 * 
-	 * @return The hashing algorithm notation as used by {@link MessageDigest}.
-	 */
-	public String getHashNotation() {
-		return hashNotation;
-	}
+   public String getDkimNotation() {
+      return dkimNotation;
+   }
+
+   public String getJavaNotation() {
+      return javaNotation;
+   }
+
+   public String getHashNotation() {
+      return hashNotation;
+   }
 
 }
