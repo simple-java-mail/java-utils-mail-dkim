@@ -19,7 +19,7 @@ package net.markenwerk.utils.mail.dkim;
 
 import java.io.IOException;
 
-import javax.mail.MessagingException;
+import jakarta.mail.MessagingException;
 
 /**
  * A {@link MessagingException} that is used to indicate DKIM specific
