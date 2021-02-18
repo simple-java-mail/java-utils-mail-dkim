@@ -5,11 +5,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.markenwerk</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>1.4.0</version>
+	<version>2.0.0</version>
 	<packaging>jar</packaging>
 
 	<name>${project.groupId}:${project.artifactId}</name>
-	<description>A DKIM library for JavaMail</description>
+	<description>A DKIM library for Jakarta Mail</description>
 	<url>${urls.github}</url>
 	<inceptionYear>2015</inceptionYear>
 
@@ -245,7 +245,7 @@
 							</dependencySourceIncludes>
 							<links>
 								<link>http://iharder.sourceforge.net/current/java/base64/api/</link>
-								<link>https://javaee.github.io/javamail/docs/api/</link>
+								<link>https://eclipse-ee4j.github.io/mail/docs/api/</link>
 							</links>
 						</configuration>
 						<executions>

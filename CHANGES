@@ -10,6 +10,9 @@ Changes made while creating this library from the 'JavaMail-Crypto API':
    'net.markenwerk.utils.mail.dkim' to clarify that this library is a
    a new project.
 
+2. Switched from Java Mail to Jakarta Mail.
+
+
 
 
 

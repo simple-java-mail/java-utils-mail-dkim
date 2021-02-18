@@ -1,11 +1,11 @@
-# A DKIM library for JavaMail
+# A DKIM library for Jakarta Mail
 
 [![Build Status](https://travis-ci.org/markenwerk/java-utils-mail-dkim.svg?branch=master)](https://travis-ci.org/markenwerk/java-utils-mail-dkim)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim)
-[![Java SE 7](https://img.shields.io/badge/java-SE_7-brightgreen.svg)](http://docs.oracle.com/javase/7/docs/api/)
+[![Java SE 8](https://img.shields.io/badge/java-SE_8-brightgreen.svg)](https://docs.oracle.com/javase/8/docs/api/)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache_2.0-brightgreen.svg)](https://github.com/markenwerk/java-utils-mail-dkim/blob/master/LICENSE)
 
-This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [JavaMail](https://javaee.github.io/javamail/).
+This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [Jakarta Mail](https://eclipse-ee4j.github.io/mail).
 
 ## Overview
 
@@ -20,7 +20,7 @@ This library is hosted in the [Maven Central Repository](https://maven-badges.he
 <dependency>
 	<groupId>net.markenwerk</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>1.4.0</version>
+	<version>2.0.0</version>
 </dependency>
 ```
 
@@ -142,7 +142,7 @@ domainKey.check(from, getDkimPrivateKeyFileForSender(from));
 [DkimSigner]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DkimSigner.html
 [DomainKeyUtil]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DomainKeyUtil.html
 
-[MimeMessage]: http://javamail.java.net/nonav/docs/api/index.html?javax/mail/internet/MimeMessage.html
-[Session]: http://javamail.java.net/nonav/docs/api/index.html?javax/mail/Session.html
+[MimeMessage]: https://eclipse-ee4j.github.io/mail/docs/api/jakarta/mail/internet/MimeMessage.html
+[Session]: https://eclipse-ee4j.github.io/mail/docs/api/jakarta/mail/Session.html
 
 [RSAPrivateKey]: http://docs.oracle.com/javase/8/docs/api/index.html?java/security/interfaces/RSAPrivateKey.html
