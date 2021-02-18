@@ -34,6 +34,7 @@ import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
@@ -55,7 +56,6 @@ import com.sun.mail.util.CRLFOutputStream;
 import com.sun.mail.util.QPEncoderStream;
 
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
-import net.iharder.Base64;
 import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
 import net.markenwerk.utils.data.fetcher.DataFetchException;
 
@@ -690,7 +690,7 @@ public class DkimSigner {
    }
 
    private static String base64Encode(byte[] bytes) {
-      String encoded = Base64.encodeBytes(bytes);
+      String encoded = Base64.getEncoder().encodeToString(bytes);
 
       // remove unnecessary line feeds after 76 characters
       encoded = encoded.replace("\n", "");

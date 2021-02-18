@@ -17,7 +17,6 @@
  */
 package net.markenwerk.utils.mail.dkim;
 
-import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -29,6 +28,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,7 +39,6 @@ import java.util.regex.Pattern;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
-import net.iharder.Base64;
 
 /**
  * A {@code DomainKey} holds the information about a domain key.
@@ -153,11 +152,11 @@ public final class DomainKey {
    private RSAPublicKey getRsaPublicKey(String publicKeyTagValue) {
       try {
          KeyFactory keyFactory = KeyFactory.getInstance(KeyPairType.RSA.getJavaNotation());
-         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.decode(publicKeyTagValue));
+         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyTagValue));
          return (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
       } catch (NoSuchAlgorithmException nsae) {
          throw new DkimException("RSA algorithm not found by JVM");
-      } catch (IOException e) {
+      } catch (IllegalArgumentException e) {
          throw new DkimException("The public key " + publicKeyTagValue + " couldn't be read.", e);
       } catch (InvalidKeySpecException e) {
          throw new DkimException("The public key " + publicKeyTagValue + " couldn't be decoded.", e);
@@ -167,12 +166,12 @@ public final class DomainKey {
    private EdDSAPublicKey getEd25519PublicKey(String publicKeyTagValue) {
       try {
          KeyFactory keyFactory = KeyFactory.getInstance(KeyPairType.ED25519.getJavaNotation());
-         EdDSAPublicKeySpec publicKeySpec = new EdDSAPublicKeySpec(Base64.decode(publicKeyTagValue),
+         EdDSAPublicKeySpec publicKeySpec = new EdDSAPublicKeySpec(Base64.getDecoder().decode(publicKeyTagValue),
                EdDSANamedCurveTable.ED_25519_CURVE_SPEC);
          return (EdDSAPublicKey) keyFactory.generatePublic(publicKeySpec);
       } catch (NoSuchAlgorithmException nsae) {
          throw new DkimException("Ed25519 algorithm not found by JVM");
-      } catch (IOException e) {
+      } catch (IllegalArgumentException e) {
          throw new DkimException("The public key " + publicKeyTagValue + " couldn't be read.", e);
       } catch (InvalidKeySpecException e) {
          throw new DkimException("The public key " + publicKeyTagValue + " couldn't be decoded.", e);

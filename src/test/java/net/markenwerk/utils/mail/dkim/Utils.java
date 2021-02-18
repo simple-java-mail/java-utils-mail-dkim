@@ -8,9 +8,9 @@ import java.io.IOException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Random;
 
-import net.iharder.Base64;
 import net.markenwerk.commons.nulls.NullOutputStream;
 import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
 
@@ -53,7 +53,7 @@ class Utils {
 		MessageDigest digest = MessageDigest.getInstance(algorithm);
 		DigestOutputStream out = new DigestOutputStream(new NullOutputStream(), digest);
 		new BufferedDataFetcher().copy(new ByteArrayInputStream(string.getBytes()), out, true, true);
-		return Base64.encodeBytes(digest.digest());
+		return Base64.getEncoder().encodeToString(digest.digest());
 	}
 
 	static DkimSigner getSigner(Canonicalization canonicalization, SigningAlgorithm algorithm) throws Exception {

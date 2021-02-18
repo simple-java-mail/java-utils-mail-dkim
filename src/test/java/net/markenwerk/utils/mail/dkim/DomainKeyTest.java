@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -17,8 +18,6 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
 import org.junit.Test;
-
-import net.iharder.Base64;
 
 public class DomainKeyTest {
 
@@ -37,7 +36,7 @@ public class DomainKeyTest {
       DomainKey domainKey = new DomainKey(tags);
 
       assertNotNull(domainKey);
-      assertArrayEquals(Base64.decode(EXAMPLE_DOMAIN_KEY), domainKey.getPublicKey().getEncoded());
+      assertArrayEquals(Base64.getDecoder().decode(EXAMPLE_DOMAIN_KEY), domainKey.getPublicKey().getEncoded());
 
    }
 
