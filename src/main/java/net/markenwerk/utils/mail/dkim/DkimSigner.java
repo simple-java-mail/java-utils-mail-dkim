@@ -48,8 +48,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-import javax.mail.Header;
-import javax.mail.MessagingException;
+import jakarta.mail.Header;
+import jakarta.mail.MessagingException;
 
 import com.sun.mail.util.CRLFOutputStream;
 import com.sun.mail.util.QPEncoderStream;
