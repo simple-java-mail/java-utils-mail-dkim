@@ -1,65 +1,70 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>net.markenwerk</groupId>
+
+	<parent>
+		<groupId>com.github.bbottema</groupId>
+		<artifactId>standard-project-parent</artifactId>
+		<version>1.0.24</version>
+	</parent>
+
+	<groupId>org.simplejavamail</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>2.0.1</version>
 	<packaging>jar</packaging>
-
-	<name>${project.groupId}:${project.artifactId}</name>
+	<name>utils-mail-dkim</name>
+	<version>2.0.2-SNAPSHOT</version>
 	<description>A DKIM library for Jakarta Mail</description>
-	<url>${urls.github}</url>
-	<inceptionYear>2015</inceptionYear>
+	<url>https://github.com/simple-java-mail/java-utils-mail-dkim</url>
+	<inceptionYear>2021</inceptionYear>
 
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
+	<properties>
+		<automaticModuleName>org.simplejavamail.java-utils-mail-dkim</automaticModuleName>
+		<!-- license plugin, see possible types here: -->
+		<!-- https://github.com/mathieucarbou/license-maven-plugin/tree/master/license-maven-plugin/src/main/resources/com/mycila/maven/plugin/license/templates -->
+		<license.type>com/mycila/maven/plugin/license/templates/APACHE-2.txt</license.type>
+		<license.owner.name>Benny Bottema</license.owner.name>
+		<license.owner.email>benny@bennybottema.com</license.owner.email>
+	</properties>
 
-	<organization>
-		<name>Markenwerk – Gesellschaft für markenbildende Maßnahmen mbH</name>
-		<url>http://markenwerk.net/</url>
-	</organization>
+	<scm>
+		<connection>scm:git:git://github.com/simple-java-mail/java-utils-mail-dkim.git</connection>
+		<developerConnection>scm:git:git@github.com:simple-java-mail/java-utils-mail-dkim.git</developerConnection>
+		<url>https://github.com/simple-java-mail/java-utils-mail-dkim</url>
+	</scm>
 
 	<developers>
 		<developer>
-			<name>Torsten Krause</name>
-			<email>tk@markenwerk.net</email>
-			<organization>Markenwerk GmbH</organization>
-			<organizationUrl>https://markenwerk.net/</organizationUrl>
+			<id>benny</id>
+			<name>Benny Bottema</name>
+			<email>benny@bennybottema.com</email>
+			<url>http://www.bennybottema.com</url>
+			<roles>
+				<role>developer</role>
+				<role>packager</role>
+			</roles>
 		</developer>
 	</developers>
 
-	<scm>
-		<connection>${connections.github}</connection>
-		<developerConnection>${connections.github}</developerConnection>
-		<url>${urls.github}</url>
-	</scm>
-
-	<ciManagement>
-		<system>Travis CI</system>
-		<url>${urls.travis}</url>
-	</ciManagement>
+	<contributors>
+		<contributor>
+			<name>Torsten Krause</name>
+			<roles>
+				<role>original developer (GitHub, 2014)</role>
+			</roles>
+		</contributor>
+		<contributor>
+			<name>Florian Sager</name>
+			<roles>
+				<role>original developer (SourceForge, 2008)</role>
+			</roles>
+		</contributor>
+	</contributors>
 
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>${urls.github}/issues</url>
+		<url>https://github.com/simple-java-mail/java-utils-mail-dkim/issues</url>
 	</issueManagement>
-
-	<properties>
-		<project.identifier>markenwerk/java-${project.artifactId}</project.identifier>
-		<urls.travis>https://travis-ci.org/${project.identifier}</urls.travis>
-		<urls.github>https://github.com/${project.identifier}</urls.github>
-		<scm.comment>Javadoc for ${project.artifactId}:${project.version}</scm.comment>
-		<connections.github>scm:git:github:${project.identifier}.git</connections.github>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
 
 	<dependencies>
 		<dependency>
@@ -71,7 +76,7 @@
 		<dependency>
 			<groupId>com.sun.mail</groupId>
 			<artifactId>jakarta.mail</artifactId>
-			<version>2.0.0</version>
+			<version>2.0.1</version>
 		</dependency>
 
 		<dependency>
@@ -79,235 +84,5 @@
 			<artifactId>eddsa</artifactId>
 			<version>0.3.0</version>
 		</dependency>
-
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
-
-	<build>
-		<resources>
-			<resource>
-				<directory>${project.basedir}</directory>
-				<includes>
-					<include>LICENSE</include>
-				</includes>
-			</resource>
-		</resources>
-
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.2</version>
-				<configuration>
-					<systemProperties>
-						<user.timezone>UTC</user.timezone>
-					</systemProperties>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.1.2</version>
-				<configuration>
-					<archive>
-						<addMavenDescriptor>false</addMavenDescriptor>
-						<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-					</archive>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<version>4.2.0</version>
-				<configuration>
-					<instructions>
-						<Bundle-DocURL>${project.url}</Bundle-DocURL>
-					</instructions>
-				</configuration>
-				<executions>
-					<execution>
-						<id>bundle-manifest</id>
-						<phase>process-classes</phase>
-						<goals>
-							<goal>manifest</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.1.0</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.1.0</version>
-				<configuration>
-					<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-				</configuration>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
-
-	<profiles>
-		<profile>
-			<id>deploy</id>
-			<distributionManagement>
-				<snapshotRepository>
-					<id>ossrh</id>
-					<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-				</snapshotRepository>
-				<repository>
-					<id>ossrh</id>
-					<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-				</repository>
-			</distributionManagement>
-
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.6</version>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-
-					<plugin>
-						<groupId>org.sonatype.plugins</groupId>
-						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.6.8</version>
-						<extensions>true</extensions>
-						<configuration>
-							<serverId>ossrh</serverId>
-							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-
-		<profile>
-			<id>publish</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>3.1.0</version>
-						<configuration>
-							<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-							<notimestamp>true</notimestamp>
-							<includeDependencySources>true</includeDependencySources>
-							<includeTransitiveDependencySources>true</includeTransitiveDependencySources>
-							<dependencySourceIncludes>
-								<dependencySourceInclude>net.markenwerk:*</dependencySourceInclude>
-							</dependencySourceIncludes>
-							<links>
-								<link>https://eclipse-ee4j.github.io/mail/docs/api/</link>
-							</links>
-						</configuration>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-scm-publish-plugin</artifactId>
-						<version>3.0.0</version>
-						<configuration>
-							<checkoutDirectory>${project.build.directory}/gh-pages</checkoutDirectory>
-							<checkinComment>${scm.comment}</checkinComment>
-							<content>${project.build.directory}/apidocs</content>
-							<siteOutputEncoding>UTF-8</siteOutputEncoding>
-							<skipDeletedFiles>false</skipDeletedFiles>
-							<pubScmUrl>${project.scm.developerConnection}</pubScmUrl>
-							<scmBranch>gh-pages</scmBranch>
-						</configuration>
-						<executions>
-							<execution>
-								<id>publish-javadocs</id>
-								<phase>install</phase>
-								<goals>
-									<goal>publish-scm</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-
-		<profile>
-			<id>coverall</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>0.8.4</version>
-						<configuration>
-							<excludes>
-								<exclude>**/*Exception.*</exclude>
-							</excludes>
-						</configuration>
-						<executions>
-							<execution>
-								<id>prepare-agent</id>
-								<goals>
-									<goal>prepare-agent</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-
-					<plugin>
-						<groupId>org.eluder.coveralls</groupId>
-						<artifactId>coveralls-maven-plugin</artifactId>
-						<version>4.3.0</version>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 </project>

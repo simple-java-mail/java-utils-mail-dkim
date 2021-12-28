@@ -1,12 +1,18 @@
-This file is part of 'A DKIM library for JavaMail', hereafter
-called 'this library', identified by the following coordinates:
+  =========================================================================
+  ==  NOTICE file for use with the Apache License, Version 2.0           ==
+  =========================================================================
 
-   groupID: net.markenwerk
-   artifactId: utils-mail-dkim
+  Simple Java Mail - utils-mail-dkim
+  Copyright (C) 2021 Benny Bottema (benny@bennybottema.com)
+  Copyright (C) 2014 Torsten Krause
+  Copyright (C) 2008 Florian Sager
 
-The initial version of this library is based on the a project called
-'DKIM for JavaMail' (http://www.agitos.de/dkim-for-javamail/).
+  This product uses no commercial products.
 
-See the CHANGES file in this directory for a rough overview of the changes made
-to 'DKIM for JavaMail'. Keep and extend this file if you want to create a
-modified version of this library or base a new project on this library.
+  This is a continuation of the abandoned fork
+  https://github.com/markenwerk/java-utils-mail-dkim, which itself is based
+  on the abandonded SourceForge project
+  'DKIM for JavaMail' (https://sourceforge.net/projects/dkim-javamail).
+
+  This latest reincarnation was relicensed to Apachev2 with permissions from
+  all past authors (email correspondence included in the project root).

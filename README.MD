@@ -1,11 +1,29 @@
-# A DKIM library for Jakarta Mail
+[![APACHE v2 License](https://img.shields.io/badge/license-apachev2-blue.svg?style=flat)](LICENSE-2.0.txt)
+[![Latest Release](https://img.shields.io/maven-central/v/org.simplejavamail/utils-mail-dkim.svg?style=flat)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.simplejavamail%22%20AND%20a%3A%22utils-mail-dkim%22)
+[![Javadocs](http://www.javadoc.io/badge/org.simplejavamail/utils-mail-dkim.svg)](http://www.javadoc.io/doc/org.simplejavamail/utils-mail-dkim)
+[![Codacy](https://img.shields.io/codacy/grade/9f9cd8b379534172bd52565122f794d7?style=flat)](https://www.codacy.com/gh/simple-java-mail/java-utils-mail-dkim)
 
-[![Build Status](https://travis-ci.org/markenwerk/java-utils-mail-dkim.svg?branch=master)](https://travis-ci.org/markenwerk/java-utils-mail-dkim)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim)
-[![Java SE 8](https://img.shields.io/badge/java-SE_8-brightgreen.svg)](https://docs.oracle.com/javase/8/docs/api/)
-[![Apache 2.0 License](https://img.shields.io/badge/license-Apache_2.0-brightgreen.svg)](https://github.com/markenwerk/java-utils-mail-dkim/blob/master/LICENSE)
+# org.simplejavamail:utils-mail-dkim
 
 This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [Jakarta Mail](https://eclipse-ee4j.github.io/mail).
+
+Note: This is a revival / continuation of the archived project markenwerk/java-utils-mail-dkim, which itself was a continuation of an abandoned project on SourceForge.
+
+```xml
+<dependency>
+	<groupId>org.simplejavamail</groupId>
+	<artifactId>utils-mail-dkim</artifactId>
+	<version>2.0.1</version>
+</dependency>
+```
+
+## Change history
+
+v1.0.x (xx-xx-2021)
+
+- Initial release, with Jakarta Mail 2.0.1 repository moved to new home and release pipeline
+
+# Original documenation follows:
 
 ## Overview
 
@@ -13,16 +31,6 @@ This library allows you to
 
  - sign MIME Messages according to the DKIM standard,
  - check, whether the DNS resource record for a sending domain is prepared correctly for DKIM.
-
-This library is hosted in the [Maven Central Repository](https://maven-badges.herokuapp.com/maven-central/net.markenwerk/utils-mail-dkim). You can use it with the following coordinates:
-
-```xml
-<dependency>
-	<groupId>net.markenwerk</groupId>
-	<artifactId>utils-mail-dkim</artifactId>
-	<version>2.0.1</version>
-</dependency>
-```
 
 Consult the [usage description](#usage) and [Javadoc](http://markenwerk.github.io/java-utils-mail-dkim/index.html) for further information.
 
@@ -136,13 +144,3 @@ To disable this check, which is not recommended, call `dkimSigner.setCheckDomain
 DomainKey domainKey = DomainKeyUtil.getDomainKey(signingDomain, selector);
 domainKey.check(from, getDkimPrivateKeyFileForSender(from));
 ```
-
-[DkimAcceptanceException]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DkimAcceptanceException.html
-[DkimMessage]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DkimMessage.html
-[DkimSigner]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DkimSigner.html
-[DomainKeyUtil]: https://markenwerk.github.io/java-utils-mail-dkim/index.html?net/markenwerk/utils/mail/dkim/DomainKeyUtil.html
-
-[MimeMessage]: https://eclipse-ee4j.github.io/mail/docs/api/jakarta/mail/internet/MimeMessage.html
-[Session]: https://eclipse-ee4j.github.io/mail/docs/api/jakarta/mail/Session.html
-
-[RSAPrivateKey]: http://docs.oracle.com/javase/8/docs/api/index.html?java/security/interfaces/RSAPrivateKey.html
