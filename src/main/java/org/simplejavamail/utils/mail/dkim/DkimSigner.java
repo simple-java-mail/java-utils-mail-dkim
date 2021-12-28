@@ -1,22 +1,4 @@
-/* 
- * Copyright 2008 The Apache Software Foundation or its licensors, as
- * applicable.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * A licence was granted to the ASF by Florian Sager on 30 November 2008
- */
-package net.markenwerk.utils.mail.dkim;
+package org.simplejavamail.utils.mail.dkim;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,6 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -58,6 +42,8 @@ import com.sun.mail.util.QPEncoderStream;
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
 import net.markenwerk.utils.data.fetcher.DataFetchException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Main class providing a signature according to DKIM RFC 4871.
@@ -431,11 +417,6 @@ public class DkimSigner {
       return copyHeaderFields;
    }
 
-   /**
-    * Sets the z parameter to be used.
-    * 
-    * @param zParam The z parameter to be used.
-    */
    public void setCopyHeaderFields(boolean copyHeaderFields) {
       this.copyHeaderFields = copyHeaderFields;
    }
@@ -444,7 +425,7 @@ public class DkimSigner {
     * Returns whether the domain key should be retrieved and checked.
     * 
     * @return Whether the domain key should be retrieved and checked.
-    * @see DomainKey#check(String, RSAPrivateKey)
+    * @see DomainKey#check(String, PrivateKey)
     */
    public boolean isCheckDomainKey() {
       return checkDomainKey;
@@ -518,11 +499,11 @@ public class DkimSigner {
       if (lengthParam) {
          signatureData.put("l", Integer.toString(canonicalBody.length()));
       }
-      signatureData.put("bh", base64Encode(messageDigest.digest(canonicalBody.getBytes())));
+      signatureData.put("bh", base64Encode(messageDigest.digest(canonicalBody.getBytes(UTF_8))));
 
       String serializedSignature = serializeSignature(signatureData);
       headerValues.append(headerCanonicalization.canonicalizeHeader(DKIM_SIGNATUR_HEADER, serializedSignature));
-      byte[] signature = createSignature(headerValues.toString().getBytes());
+      byte[] signature = createSignature(headerValues.toString().getBytes(UTF_8));
 
       return DKIM_SIGNATUR_HEADER + ": " + serializedSignature + fold(base64Encode(signature), 3);
 
@@ -597,11 +578,11 @@ public class DkimSigner {
 
    private String canonicalizeBody(DkimMessage message) throws DkimSigningException {
       try {
-         byte[] bodyBytes = message.getEncodedBody().getBytes();
+         byte[] bodyBytes = message.getEncodedBody().getBytes(UTF_8);
          ByteArrayOutputStream buffer = new ByteArrayOutputStream();
          new BufferedDataFetcher().copy(new ByteArrayInputStream(bodyBytes), new CRLFOutputStream(buffer));
-         return bodyCanonicalization.canonicalizeBody(buffer.toString());
-      } catch (DataFetchException e) {
+         return bodyCanonicalization.canonicalizeBody(buffer.toString(UTF_8.name()));
+      } catch (DataFetchException | UnsupportedEncodingException e) {
          throw new DkimSigningException("Failed to canonicalize the line terminators of the message body", e);
       }
    }
@@ -676,10 +657,10 @@ public class DkimSigner {
       try {
          ByteArrayOutputStream out = new ByteArrayOutputStream();
          QPEncoderStream encodeStream = new QPEncoderStream(out);
-         encodeStream.write(s.getBytes());
+         encodeStream.write(s.getBytes(UTF_8));
          encodeStream.close();
 
-         String encoded = out.toString();
+         String encoded = out.toString(UTF_8.name());
          encoded = encoded.replaceAll(";", "=3B");
          encoded = encoded.replaceAll(" ", "=20");
 

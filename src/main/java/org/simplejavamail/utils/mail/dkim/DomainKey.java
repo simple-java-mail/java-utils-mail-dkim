@@ -1,22 +1,6 @@
-/* 
- * Copyright 2008 The Apache Software Foundation or its licensors, as
- * applicable.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-package net.markenwerk.utils.mail.dkim;
+package org.simplejavamail.utils.mail.dkim;
 
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -39,6 +23,8 @@ import java.util.regex.Pattern;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A {@code DomainKey} holds the information about a domain key.
@@ -294,12 +280,12 @@ public final class DomainKey {
          
          Signature signingSignature = Signature.getInstance(signingAlgorithm.getJavaNotation());
          signingSignature.initSign(privateKey);
-         signingSignature.update("01189998819991197253".getBytes());
+         signingSignature.update("01189998819991197253".getBytes(UTF_8));
          byte[] signatureBytes = signingSignature.sign();
 
          Signature verifyingSignature = Signature.getInstance(signingAlgorithm.getJavaNotation());
          verifyingSignature.initVerify(publicKey);
-         verifyingSignature.update("01189998819991197253".getBytes());
+         verifyingSignature.update("01189998819991197253".getBytes(UTF_8));
 
          if (!verifyingSignature.verify(signatureBytes)) {
             throw new DkimAcceptanceException("Incompatible private and public key.");

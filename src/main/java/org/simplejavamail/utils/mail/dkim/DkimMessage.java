@@ -1,26 +1,9 @@
-/* 
- * Copyright 2008 The Apache Software Foundation or its licensors, as
- * applicable.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * A licence was granted to the ASF by Florian Sager on 30 November 2008
- */
-package net.markenwerk.utils.mail.dkim;
+package org.simplejavamail.utils.mail.dkim;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 
 import jakarta.mail.MessagingException;
@@ -30,6 +13,8 @@ import jakarta.mail.internet.MimeUtility;
 import com.sun.mail.smtp.SMTPMessage;
 
 import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Extension of {@link SMTPMessage} for the inclusion of a DKIM signature.
@@ -110,7 +95,7 @@ public class DkimMessage extends SMTPMessage {
 			bodyBuffer.close();
 		}
 
-		encodedBody = bodyBuffer.toString();
+		encodedBody = bodyBuffer.toString(UTF_8.name());
 
 		// second, sign the message
 		String signatureHeaderLine = signer.sign(this);

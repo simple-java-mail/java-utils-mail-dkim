@@ -1,4 +1,4 @@
-package net.markenwerk.utils.mail.dkim;
+package org.simplejavamail.utils.mail.dkim;
 
 import static org.junit.Assert.assertEquals;
 
