@@ -13,15 +13,16 @@ Note: This is a revival / continuation of the archived project markenwerk/java-u
 <dependency>
 	<groupId>org.simplejavamail</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>2.0.1</version>
+	<version>3.0.0</version>
 </dependency>
 ```
 
 ## Change history
 
-v1.0.x (xx-xx-2021)
+v3.0.0 (28-12-2021)
 
-- Initial release, with Jakarta Mail 2.0.1 repository moved to new home and release pipeline
+- Initial release under the new home of Simple Java Mail, with Jakarta Mail 2.0.1 and CircleCI release pipeline
+- Resolved a few minor Spotbugs errors
 
 # Original documenation follows:
 
