@@ -1,5 +1,13 @@
 package org.simplejavamail.utils.mail.dkim;
 
+import jakarta.mail.Header;
+import jakarta.mail.MessagingException;
+import net.i2p.crypto.eddsa.EdDSAPrivateKey;
+import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
+import net.markenwerk.utils.data.fetcher.DataFetchException;
+import org.eclipse.angus.mail.util.CRLFOutputStream;
+import org.eclipse.angus.mail.util.QPEncoderStream;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -7,7 +15,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -32,16 +39,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
-
-import jakarta.mail.Header;
-import jakarta.mail.MessagingException;
-
-import com.sun.mail.util.CRLFOutputStream;
-import com.sun.mail.util.QPEncoderStream;
-
-import net.i2p.crypto.eddsa.EdDSAPrivateKey;
-import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
-import net.markenwerk.utils.data.fetcher.DataFetchException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 

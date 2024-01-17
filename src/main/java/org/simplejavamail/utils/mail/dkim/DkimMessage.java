@@ -1,18 +1,15 @@
 package org.simplejavamail.utils.mail.dkim;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
-
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeUtility;
-
-import com.sun.mail.smtp.SMTPMessage;
-
 import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
+import org.eclipse.angus.mail.smtp.SMTPMessage;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Enumeration;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
