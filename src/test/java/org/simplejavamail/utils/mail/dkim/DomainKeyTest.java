@@ -1,9 +1,5 @@
 package org.simplejavamail.utils.mail.dkim;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 import java.util.HashMap;
@@ -16,8 +12,10 @@ import jakarta.mail.Message;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class DomainKeyTest {
 
@@ -35,16 +33,13 @@ public class DomainKeyTest {
 
       DomainKey domainKey = new DomainKey(tags);
 
-      assertNotNull(domainKey);
+      assertThat(domainKey).isNotNull();
       assertArrayEquals(Base64.getDecoder().decode(EXAMPLE_DOMAIN_KEY), domainKey.getPublicKey().getEncoded());
-
    }
 
    @Test
    public void checkHashWithEmptyBody() throws Exception {
-
       checkBodyHash("", "empty body");
-
    }
 
    private void checkBodyHash(String body, String description) throws Exception {
@@ -56,15 +51,12 @@ public class DomainKeyTest {
 		}
 	}
 
-   private void checkBodyHash(Canonicalization canonicalization, SigningAlgorithm algorithm, String body,
-         String description) throws Exception {
-
+   private void checkBodyHash(Canonicalization canonicalization, SigningAlgorithm algorithm, String body, String description) throws Exception {
       String configuration = canonicalization.name() + " " + algorithm.getHashNotation().toUpperCase();
       String expected = Utils.digest(canonicalization.canonicalizeBody(body), algorithm.getHashNotation());
       String actual = calculateBodyHashWithSigner(Utils.getSigner(canonicalization, algorithm));
 
-      assertEquals(configuration + " / " + description, expected, actual);
-
+      assertThat(actual).as(configuration + " / " + description).isEqualTo(expected);
    }
 
    private String calculateBodyHashWithSigner(DkimSigner dkimSigner) throws Exception {

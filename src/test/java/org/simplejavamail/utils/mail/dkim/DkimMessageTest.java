@@ -1,7 +1,5 @@
 package org.simplejavamail.utils.mail.dkim;
 
-import static org.junit.Assert.assertArrayEquals;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -14,9 +12,10 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class DkimMessageTest {
 
@@ -58,7 +57,7 @@ public class DkimMessageTest {
 		Utils.write(new File("./src/test/resources/" + folderName, file.getName()), bytes);
 	}
 
-	@Before
+	@BeforeEach
 	public void fixateSystemTimeZone() {
 		System.setProperty("user.timezone", "UTC");
 	}
@@ -84,8 +83,7 @@ public class DkimMessageTest {
 		byte[] actual = writeMessage(Utils.getSigner(canonicalization, algorithm), body);
 
 		String configuration = canonicalization.name() + " " + algorithm.getHashNotation().toUpperCase();
-		assertArrayEquals(configuration + " / " + file.getName(), expected, actual);
-
+		assertArrayEquals(expected, actual, configuration + " / " + file.getName());
 	}
 
 	private static String getFolderName(Canonicalization canonicalization, SigningAlgorithm algorithm) {

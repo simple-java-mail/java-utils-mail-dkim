@@ -1,8 +1,9 @@
 package org.simplejavamail.utils.mail.dkim;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CannonicalizationTest {
 
@@ -62,10 +63,9 @@ public class CannonicalizationTest {
 
 	}
 
-	private void checkBody(Canonicalization canonicalization, String body, String result, String description) {
-
-		assertEquals(canonicalization.name() + " / " + description, result, canonicalization.canonicalizeBody(body));
-
+	private void checkBody(Canonicalization canonicalization, String body, String actual, String description) {
+		String expected = canonicalization.name() + " / " + description;
+		String message = canonicalization.canonicalizeBody(body);
+		assertThat(actual).as(message).isEqualTo(expected);
 	}
-
 }
