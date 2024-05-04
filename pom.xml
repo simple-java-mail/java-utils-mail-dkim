@@ -13,7 +13,7 @@
 	<artifactId>utils-mail-dkim</artifactId>
 	<packaging>jar</packaging>
 	<name>utils-mail-dkim</name>
-	<version>3.1.0</version>
+	<version>3.1.1</version>
 	<description>A DKIM library for Jakarta Mail</description>
 	<url>https://github.com/simple-java-mail/java-utils-mail-dkim</url>
 	<inceptionYear>2021</inceptionYear>
