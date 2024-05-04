@@ -13,11 +13,18 @@ Note: This is a revival / continuation of the archived project markenwerk/java-u
 <dependency>
 	<groupId>org.simplejavamail</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>3.1.1</version>
+	<version>3.2.0</version>
 </dependency>
 ```
 
 ## Change history
+
+v3.2.0 (04-05-2024)
+
+- Bumped angus-mail from 2.0.2 to 2.0.3
+- Upgraded release pipeline
+- Updated parent pom, which upgraded to Junit 5
+
 
 v3.1.0 - v3.1.1
 
