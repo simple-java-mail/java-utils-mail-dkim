@@ -57,15 +57,13 @@ public class CannonicalizationTest {
 	}
 
 	private void checkBody(String body, String simpleResult, String relaxedResult, String description) {
-
 		checkBody(Canonicalization.SIMPLE, body, simpleResult, description);
 		checkBody(Canonicalization.RELAXED, body, relaxedResult, description);
-
 	}
 
-	private void checkBody(Canonicalization canonicalization, String body, String actual, String description) {
-		String expected = canonicalization.name() + " / " + description;
-		String message = canonicalization.canonicalizeBody(body);
+	private void checkBody(Canonicalization canonicalization, String body, String expected, String description) {
+		String message = canonicalization.name() + " / " + description;
+		String actual = canonicalization.canonicalizeBody(body);
 		assertThat(actual).as(message).isEqualTo(expected);
 	}
 }
