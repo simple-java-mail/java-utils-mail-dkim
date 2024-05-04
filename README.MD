@@ -13,15 +13,16 @@ Note: This is a revival / continuation of the archived project markenwerk/java-u
 <dependency>
 	<groupId>org.simplejavamail</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>3.1.0</version>
+	<version>3.1.1</version>
 </dependency>
 ```
 
 ## Change history
 
-v3.1.0 (17-01-2024)
+v3.1.0 - v3.1.1
 
-- [#4](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/4) Update to latest Jakarta+Angus dependencies
+- 3.1.1: 04-05-2024: Bumped jakarta.mail-api version from 2.1.2 to 2.1.3
+- 3.1.0: 17-01-2024: [#4](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/4) Update to latest Jakarta+Angus dependencies
 
 
 v3.0.0 (28-12-2021)
