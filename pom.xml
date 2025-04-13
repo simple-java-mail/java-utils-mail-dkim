@@ -85,9 +85,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>net.i2p.crypto</groupId>
-			<artifactId>eddsa</artifactId>
-			<version>0.3.0</version>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk18on</artifactId>
+			<version>1.78</version>
 		</dependency>
 	</dependencies>
 </project>

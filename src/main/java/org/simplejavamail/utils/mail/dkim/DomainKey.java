@@ -1,9 +1,9 @@
 package org.simplejavamail.utils.mail.dkim;
 
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
@@ -20,11 +20,9 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
-import net.i2p.crypto.eddsa.EdDSAPublicKey;
-import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
-import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
+
+import org.bouncycastle.jcajce.interfaces.EdDSAPublicKey;
 
 /**
  * A {@code DomainKey} holds the information about a domain key.
@@ -151,11 +149,10 @@ public final class DomainKey {
 
    private EdDSAPublicKey getEd25519PublicKey(String publicKeyTagValue) {
       try {
-         KeyFactory keyFactory = KeyFactory.getInstance(KeyPairType.ED25519.getJavaNotation());
-         EdDSAPublicKeySpec publicKeySpec = new EdDSAPublicKeySpec(Base64.getDecoder().decode(publicKeyTagValue),
-               EdDSANamedCurveTable.ED_25519_CURVE_SPEC);
-         return (EdDSAPublicKey) keyFactory.generatePublic(publicKeySpec);
-      } catch (NoSuchAlgorithmException nsae) {
+         byte[] keyBytes = Base64.getDecoder().decode(publicKeyTagValue);
+         KeyFactory keyFactory = KeyFactory.getInstance(KeyPairType.ED25519.getJavaNotation(), "BC");
+         return (EdDSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(keyBytes));
+      } catch (NoSuchAlgorithmException | NoSuchProviderException nsae) {
          throw new DkimException("Ed25519 algorithm not found by JVM");
       } catch (IllegalArgumentException e) {
          throw new DkimException("The public key " + publicKeyTagValue + " couldn't be read.", e);

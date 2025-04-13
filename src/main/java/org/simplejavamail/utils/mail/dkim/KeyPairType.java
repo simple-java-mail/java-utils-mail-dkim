@@ -4,7 +4,7 @@ import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
 
-import net.i2p.crypto.eddsa.EdDSASecurityProvider;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public enum KeyPairType {
 
@@ -25,7 +25,7 @@ public enum KeyPairType {
       @Override
       protected void initialize() {
          if (!initailized) {
-            Security.addProvider(new EdDSASecurityProvider());
+            Security.addProvider(new BouncyCastleProvider());
             initailized = true;
          }
       }

@@ -2,9 +2,10 @@ package org.simplejavamail.utils.mail.dkim;
 
 import jakarta.mail.Header;
 import jakarta.mail.MessagingException;
-import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.markenwerk.utils.data.fetcher.BufferedDataFetcher;
 import net.markenwerk.utils.data.fetcher.DataFetchException;
+
+import org.bouncycastle.jcajce.interfaces.EdDSAPrivateKey;
 import org.eclipse.angus.mail.util.CRLFOutputStream;
 import org.eclipse.angus.mail.util.QPEncoderStream;
 
