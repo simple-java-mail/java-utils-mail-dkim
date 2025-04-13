@@ -13,17 +13,19 @@ Note: This is a revival / continuation of the archived project markenwerk/java-u
 <dependency>
 	<groupId>org.simplejavamail</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>3.2.0</version>
+	<version>3.2.1</version>
 </dependency>
 ```
 
 ## Change history
 
-v3.2.0 (04-05-2024)
+v3.2.0 - v3.2.1
 
-- Bumped angus-mail from 2.0.2 to 2.0.3
-- Upgraded release pipeline
-- Updated parent pom, which upgraded to Junit 5
+- 3.2.1: 13-04-2025: [#8](https://github.com/simple-java-mail/java-utils-mail-dkim/pull/8) resolve vulnerability by migrating from net.i2p.crypto.eddsa to org.bouncycastle.bcpkix-jdk18on
+    - resolves [#7](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/7) CVE-2020-36843 Vulnerability
+- 3.2.0: 04-05-2024: Bumped angus-mail from 2.0.2 to 2.0.3
+- 3.2.0: 04-05-2024: Upgraded release pipeline
+- 3.2.0: 04-05-2024: Updated parent pom, which upgraded to Junit 5
 
 
 v3.1.0 - v3.1.1
