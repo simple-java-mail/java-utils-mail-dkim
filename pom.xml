@@ -19,7 +19,7 @@
 	<inceptionYear>2021</inceptionYear>
 
 	<properties>
-		<automaticModuleName>org.simplejavamail.java-utils-mail-dkim</automaticModuleName>
+		<automaticModuleName>org.simplejavamail.java_utils_mail_dkim</automaticModuleName>
 		<!-- license plugin, see possible types here: -->
 		<!-- https://github.com/mathieucarbou/license-maven-plugin/tree/master/license-maven-plugin/src/main/resources/com/mycila/maven/plugin/license/templates -->
 		<license.type>com/mycila/maven/plugin/license/templates/APACHE-2.txt</license.type>
