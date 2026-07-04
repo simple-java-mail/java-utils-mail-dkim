@@ -161,3 +161,10 @@ To disable this check, which is not recommended, call `dkimSigner.setCheckDomain
 DomainKey domainKey = DomainKeyUtil.getDomainKey(signingDomain, selector);
 domainKey.check(from, getDkimPrivateKeyFileForSender(from));
 ```
+
+If the JVM default DNS resolver is not suitable for DKIM TXT lookups, configure
+the JNDI DNS provider URL before signing or manually checking the domain key:
+
+```java
+DomainKeyUtil.setDnsProviderUrl("dns://8.8.8.8");
+```

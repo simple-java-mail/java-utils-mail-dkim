@@ -28,6 +28,7 @@ public final class DomainKeyUtil {
    private static final long DEFAULT_CACHE_TTL = 2 * 60 * 60 * 1000;
 
    private static long cacheTtl = DEFAULT_CACHE_TTL;
+   private static String dnsProviderUrl;
 
    private DomainKeyUtil() {
    }
@@ -51,6 +52,34 @@ public final class DomainKeyUtil {
          cacheTtl = DEFAULT_CACHE_TTL;
       }
       DomainKeyUtil.cacheTtl = cacheTtl;
+   }
+
+   /**
+    * Returns the JNDI DNS provider URL used for DKIM record lookups.
+    *
+    * @return The configured DNS provider URL, or {@code null} to use the JVM default.
+    */
+   public static synchronized String getDnsProviderUrl() {
+      return dnsProviderUrl;
+   }
+
+   /**
+    * Sets the JNDI DNS provider URL used for DKIM record lookups.
+    *
+    * @param dnsProviderUrl The DNS provider URL, for example {@code dns://8.8.8.8},
+    *                       or {@code null} to use the JVM default.
+    */
+   public static synchronized void setDnsProviderUrl(String dnsProviderUrl) {
+      String normalizedDnsProviderUrl = null;
+      if (null != dnsProviderUrl) {
+         normalizedDnsProviderUrl = dnsProviderUrl.trim();
+         if (normalizedDnsProviderUrl.length() == 0) {
+            normalizedDnsProviderUrl = null;
+         }
+      }
+
+      DomainKeyUtil.dnsProviderUrl = normalizedDnsProviderUrl;
+      CACHE.clear();
    }
 
    /**
@@ -191,9 +220,12 @@ public final class DomainKeyUtil {
       return selector + "._domainkey." + signingDomain;
    }
 
-   private static Hashtable<String, String> getEnvironment() {
+   private static synchronized Hashtable<String, String> getEnvironment() {
       Hashtable<String, String> environment = new Hashtable<String, String>();
       environment.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
+      if (null != dnsProviderUrl) {
+         environment.put("java.naming.provider.url", dnsProviderUrl);
+      }
       return environment;
    }
 

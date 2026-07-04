@@ -1,8 +1,10 @@
 package org.simplejavamail.utils.mail.dkim;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Method;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -35,6 +37,27 @@ public class DomainKeyTest {
 
       assertThat(domainKey).isNotNull();
       assertArrayEquals(Base64.getDecoder().decode(EXAMPLE_DOMAIN_KEY), domainKey.getPublicKey().getEncoded());
+   }
+
+   @Test
+   public void configureDnsProviderUrl() throws Exception {
+      try {
+         DomainKeyUtil.setDnsProviderUrl("dns://8.8.8.8");
+
+         assertThat(DomainKeyUtil.getDnsProviderUrl()).isEqualTo("dns://8.8.8.8");
+         assertThat(getDomainKeyEnvironment()).containsEntry("java.naming.provider.url", "dns://8.8.8.8");
+      } finally {
+         DomainKeyUtil.setDnsProviderUrl(null);
+      }
+   }
+
+   @Test
+   public void clearDnsProviderUrlWithBlankValue() throws Exception {
+      DomainKeyUtil.setDnsProviderUrl("dns://8.8.8.8");
+      DomainKeyUtil.setDnsProviderUrl(" ");
+
+      assertThat(DomainKeyUtil.getDnsProviderUrl()).isNull();
+      assertThat(getDomainKeyEnvironment()).doesNotContainKey("java.naming.provider.url");
    }
 
    @Test
@@ -88,5 +111,12 @@ public class DomainKeyTest {
       }
 
       return matcher.group(1);
+   }
+
+   @SuppressWarnings("unchecked")
+   private Hashtable<String, String> getDomainKeyEnvironment() throws Exception {
+      Method getEnvironment = DomainKeyUtil.class.getDeclaredMethod("getEnvironment");
+      getEnvironment.setAccessible(true);
+      return (Hashtable<String, String>) getEnvironment.invoke(null);
    }
 }
