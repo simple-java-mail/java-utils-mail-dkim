@@ -20,6 +20,8 @@
 
 	<properties>
 		<automaticModuleName>org.simplejavamail.utils.mail.dkim</automaticModuleName>
+		<!-- Keep default local package/install artifacts free of JaCoCo offline probes. -->
+		<jacoco.skip>true</jacoco.skip>
 		<!-- license plugin, see possible types here: -->
 		<!-- https://github.com/mathieucarbou/license-maven-plugin/tree/master/license-maven-plugin/src/main/resources/com/mycila/maven/plugin/license/templates -->
 		<license.type>com/mycila/maven/plugin/license/templates/APACHE-2.txt</license.type>
