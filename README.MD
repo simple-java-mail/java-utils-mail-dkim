@@ -13,11 +13,18 @@ Note: This is a revival / continuation of the archived project markenwerk/java-u
 <dependency>
 	<groupId>org.simplejavamail</groupId>
 	<artifactId>utils-mail-dkim</artifactId>
-	<version>3.2.2</version>
+	<version>3.3.0</version>
 </dependency>
 ```
 
 ## Change history
+
+v3.3.0
+
+- 3.3.0: 05-07-2026: Added configurable JNDI DNS provider URL support for DKIM domain-key lookups.
+- 3.3.0: 05-07-2026: Fixed the automatic module name and kept packaged artifacts free of JaCoCo probes.
+- 3.3.0: 05-07-2026: Migrated publishing from legacy OSSRH staging to the Maven Central Portal.
+
 
 v3.2.0 - v3.2.2
 
