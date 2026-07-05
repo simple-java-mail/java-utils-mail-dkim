@@ -19,11 +19,13 @@ Note: This is a revival / continuation of the archived project markenwerk/java-u
 
 ## Change history
 
-v3.3.0
+v3.3.0 (05-07-2026)
 
-- 3.3.0: 05-07-2026: Added configurable JNDI DNS provider URL support for DKIM domain-key lookups.
-- 3.3.0: 05-07-2026: Fixed the automatic module name and kept packaged artifacts free of JaCoCo probes.
-- 3.3.0: 05-07-2026: Migrated publishing from legacy OSSRH staging to the Maven Central Portal.
+- Added `DomainKeyUtil.setDnsProviderUrl(...)` and `DomainKeyUtil.getDnsProviderUrl()` to configure the JNDI DNS provider used for DKIM domain-key TXT lookups, resolving [#3](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/3).
+- Fixed the published `Automatic-Module-Name` to `org.simplejavamail.utils.mail.dkim`, closing [#9](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/9) and incorporating [#5](https://github.com/simple-java-mail/java-utils-mail-dkim/pull/5).
+- Kept packaged JARs free of JaCoCo offline instrumentation, resolving [#6](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/6).
+- Migrated release publishing from legacy OSSRH staging to the Maven Central Portal, with CircleCI configured to auto-publish Central deployments.
+- No breaking API changes: existing DNS lookup behavior remains the default unless a DNS provider URL is configured.
 
 
 v3.2.0 - v3.2.2
