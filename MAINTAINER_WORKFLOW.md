@@ -4,6 +4,19 @@ This document describes the normal maintenance and release workflow for
 `simple-java-mail/java-utils-mail-dkim` (`org.simplejavamail:utils-mail-dkim`).
 The repository uses a single long-lived `master` branch, Maven, and CircleCI.
 
+Repository facts:
+
+- GitHub: `simple-java-mail/java-utils-mail-dkim`
+- Maven: `org.simplejavamail:utils-mail-dkim`
+- Source and bytecode baseline: Java 8
+- Automatic module name: `org.simplejavamail.utils.mail.dkim`
+- Developer landing page: `README.MD` (retain the filename's case)
+- Release history: `CHANGELOG.md` and the tag-specific GitHub release
+- Release automation: `.circleci/config.yml`, using the `github-maven-deploy` orb
+
+This follows the same maintenance model as `generic-object-pool`, adapted to
+DKIM message-byte compatibility and this repository's single published JAR.
+
 ## 1. Interpret the request
 
 Decide whether the request is issue triage, implementation without a release,
@@ -24,15 +37,18 @@ git branch -vv
 gh auth status
 ```
 
-Work only from a clean `master` aligned with `origin/master`. Use a topic branch
-when review is required; release automation still runs from `master`. Never
-rewrite shared history to resolve divergence.
+Understand and preserve unrelated local changes before starting. Create a
+short-lived implementation branch from current `origin/master` and target
+`master` for review. Do not discard local work to obtain a clean checkout; use
+an isolated worktree when needed. Release automation still runs from `master`.
+Never rewrite shared history to resolve divergence.
 
 The supported source and bytecode baseline is Java 8. Verify the effective
 toolchain before implementation or release work:
 
 ```powershell
 java -version
+mvn -version
 mvn -q help:evaluate '-Dexpression=maven.compiler.source' -DforceStdout
 ```
 
@@ -84,23 +100,75 @@ header ordering, CRLF handling, canonicalization, DNS lookups, signing defaults,
 and exception behavior as compatibility-sensitive. Do not casually regenerate
 golden signed-message fixtures or change `setCheckDomainKey(true)` behavior.
 
-Run focused tests first, then the same verification used by CircleCI:
+For patch work, keep public and protected signatures, enum constants, defaults,
+Java compatibility, and existing working output stable. A bug fix may correct
+previously invalid signatures; identify the affected input and explain that
+output change in the unreleased notes. Stop and discuss changes that require
+caller migration or alter a valid existing policy, such as disabling SHA-1,
+changing key-strength enforcement, or tightening ambiguous DNS-record handling.
+
+Keep configuration and orchestration in the existing public facade classes;
+extract implementation details into package-private helpers when that separates
+MIME serialization, canonicalization, cryptography, and DNS access. Do not add
+public abstractions merely to reorganize internal code.
+
+Add regression coverage for each demonstrated defect. Check signatures with an
+independent verifier as well as golden output. Include parsed messages, MIME
+encodings, both canonicalizations and supported algorithms, repeated/concurrent
+use, and failure paths where relevant. Use controlled DNS fixtures rather than
+live Internet records. Coordinate concurrency tests with synchronization rather
+than timing-only sleeps. Restore any JVM-wide state changed by tests, such as
+timezone, locale, or JNDI configuration.
+
+Run focused tests first, then the full verification on JDK 8, using the same
+command shape as CircleCI:
 
 ```powershell
 mvn -Dtest=DkimMessageTest test
-mvn verify -Dmaven.javadoc.skip=true -Djacoco.skip=true -Dlicense.skip=true
+mvn verify '-Dmaven.javadoc.skip=true' '-Djacoco.skip=true' '-Dlicense.skip=true'
 ```
+
+Run the same suite on JDK 21 with the inherited SpotBugs analyzer skipped:
+
+```powershell
+mvn verify '-Dmaven.javadoc.skip=true' '-Djacoco.skip=true' '-Dlicense.skip=true' '-Dspotbugs.skip=true'
+```
+
+The existing analyzer cannot process JDK 21 classes; this is tracked in
+[#24](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/24).
+Do not describe that lane as full static-analysis verification. Retain the
+JDK 8 run with SpotBugs enabled. See [compatibility boundaries](docs/COMPATIBILITY.md)
+for the fixed and deliberately deferred behavior.
+
+After packaging, run the compatibility probe with the published `3.3.0` JAR
+and both installed JDKs:
+
+```powershell
+.\scripts\verify-compatibility.ps1 -BaselineJar '<published 3.3.0 JAR>' -Java8Home '<JDK 8>' -ModernJavaHome '<JDK 21>'
+```
+
+The probe compares public/protected declarations, runs a consumer compiled
+against the baseline unchanged with both JARs on both JDKs, checks deterministic
+message output, and recompiles the consumer against the candidate. Supply
+`-CandidateJar` to override the packaged JAR or `-DependencyClasspathFile` to
+use an existing dependency classpath instead of resolving one with Maven.
 
 Before committing, inspect both the unstaged and staged diff. Do not mix
 unrelated dependency, formatting, documentation, or release-note changes.
 
 ## 6. Documentation and repository release notes
 
-`README.md` is both the developer landing page and the repository's retained
-change history. Update its dependency example and current version together, and
-add concise newest-first release notes for user-visible behavior, security,
-dependency, module-name, or compatibility changes. Preserve the original DKIM
-usage documentation below the maintained history.
+`README.MD` is the developer landing page. Keep its dependency example, Java
+baseline, automatic module name, existing-API examples, and signing defaults
+accurate. Keep the version shown there aligned with the published artifact;
+ordinary implementation work does not advance it.
+
+`CHANGELOG.md` retains the release history. Add concise user-visible changes
+under `Unreleased`, distinguishing compatibility fixes from new features.
+When a release is authorized, finalize that section for the exact released
+version and update the README dependency example after the release version is
+known. Preserve historical notes rather than duplicating the archive in the
+front page.
 
 Release notes should emphasize behavior users can observe. Skip internal build
 details unless they affect published artifacts. A patch can be concise, but its
@@ -115,8 +183,13 @@ git add <paths>
 git diff --cached --check
 git diff --cached --stat
 git commit -m "fix(scope): concise summary"
-git push origin master
 ```
+
+Use semantic subjects and do not add a sign-off unless explicitly requested.
+Push the implementation branch or open a pull request when requested. Do not
+infer permission to push, publish, or contact issue participants merely from a
+request for local fixes. Direct `master` pushes are reserved for authorized
+maintainer work; never force-push `master`.
 
 Use `[skip ci]` for bookkeeping-only documentation when appropriate. Do not use
 it for code, dependency, build, or release-lane changes that require validation.
@@ -135,6 +208,11 @@ The deployment publishes to Maven Central and creates the release commit and
 numeric tag. If Maven Central publication succeeds but repository updates fail,
 confirm that immutable external state before repairing the version commit or tag.
 Never create a second Central deployment for the same version.
+
+CircleCI currently filters `build-and-test` to `master`; a topic-branch push
+alone does not provide that build. Run the full local verification before
+review and wait for the successful `master` build before release approval.
+The deploy command skips tests, so the earlier verification is required.
 
 After deployment, fetch `master` and tags, verify the Maven Central artifact,
 and confirm the local branch can be fast-forwarded to `origin/master`. Inspect a
@@ -160,7 +238,7 @@ GitHub release.
 
 ## 10. Historical bookkeeping
 
-For an existing tag, reconstruct facts from the tag range, README history,
+For an existing tag, reconstruct facts from the tag range, changelog history,
 issues, and pull requests. Create a retrospective issue only for a coherent,
 substantive bug, security fix, feature, or user-visible enhancement that lacks a
 record. Its body must link exact commit evidence and identify the first release.
@@ -173,11 +251,25 @@ the original release dates.
 
 ## 11. Definition of done
 
+For implementation without a release:
+
+- Requested changes and regression coverage are committed on the intended branch.
 - Required tests pass, or any omission is explained.
-- `master` is clean and aligned with `origin/master`.
+- The diff contains only intentional changes and the worktree is clean.
+- `README.MD` and `CHANGELOG.md` describe the final behavior accurately, with
+  development changes under `Unreleased` and published coordinates unchanged.
+- Compatibility-sensitive changes and any deferred behavioral decisions are
+  reported to the maintainer.
+- Pushes, pull requests, and external metadata updates are completed only when
+  included in the authorized task.
+
+For a release, additionally:
+
+- The Maven Central artifact and POM are available for the released version.
+- `master`, `origin/master`, and the numeric tag agree; the checkout is clean.
 - Relevant issues and merged pull requests have canonical labels and the actual
   release milestone.
-- Every semantic-version tag has a closed, dated, empty-description milestone.
-- Every semantic-version tag has one published, self-contained GitHub release.
-- `README.md` coordinates, version, compatibility guidance, and history agree
-  with the published artifacts.
+- The released tag has a closed, dated, empty-description milestone and exactly
+  one published, self-contained GitHub release.
+- `README.MD` coordinates and compatibility guidance and `CHANGELOG.md` history
+  agree with the published artifacts.

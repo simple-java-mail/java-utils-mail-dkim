@@ -1,179 +1,168 @@
-[![APACHE v2 License](https://img.shields.io/badge/license-apachev2-blue.svg?style=flat)](LICENSE-2.0.txt)
-[![Latest Release](https://img.shields.io/maven-central/v/org.simplejavamail/utils-mail-dkim.svg?style=flat)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.simplejavamail%22%20AND%20a%3A%22utils-mail-dkim%22)
-[![Javadocs](http://www.javadoc.io/badge/org.simplejavamail/utils-mail-dkim.svg)](http://www.javadoc.io/doc/org.simplejavamail/utils-mail-dkim)
-[![Codacy](https://img.shields.io/codacy/grade/9f9cd8b379534172bd52565122f794d7?style=flat)](https://www.codacy.com/gh/simple-java-mail/java-utils-mail-dkim)
+[![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE-2.0.txt)
+[![Maven Central](https://img.shields.io/maven-central/v/org.simplejavamail/utils-mail-dkim.svg)](https://central.sonatype.com/artifact/org.simplejavamail/utils-mail-dkim)
+[![Javadoc](https://www.javadoc.io/badge/org.simplejavamail/utils-mail-dkim.svg)](https://www.javadoc.io/doc/org.simplejavamail/utils-mail-dkim)
 
-# org.simplejavamail:utils-mail-dkim
+# utils-mail-dkim
 
-This is a simple to use library to use [DKIM](https://en.wikipedia.org/wiki/DKIM) features in conjunction with [Jakarta Mail](https://eclipse-ee4j.github.io/mail).
+DKIM signing and sending-domain key validation for Jakarta Mail and Angus Mail. Configure a signer, wrap a `MimeMessage`, and send it through your existing Jakarta Mail transport.
 
-Note: This is a revival / continuation of the archived project markenwerk/java-utils-mail-dkim, which itself was a continuation of an abandoned project on SourceForge.
+- Sign MIME messages with RSA-SHA256 and configurable signing algorithms.
+- Configure simple or relaxed canonicalization independently for headers and body.
+- Check the published DNS key against the signing key and identity before signing; enabled by default.
+- Keep using standard Jakarta Mail message creation and transport APIs.
+
+This library signs outgoing messages and checks domain-key records. It does not verify signatures on received messages or implement SPF or DMARC policy.
+
+[Quick start](#quick-start) · [DNS setup](#publish-an-rsa-domain-key) · [Configuration](#configuration-and-defaults) · [Javadoc](https://www.javadoc.io/doc/org.simplejavamail/utils-mail-dkim) · [Changelog](CHANGELOG.md) · [Compatibility](docs/COMPATIBILITY.md) · [Maintainer workflow](MAINTAINER_WORKFLOW.md)
+
+## Installation
 
 ```xml
 <dependency>
-	<groupId>org.simplejavamail</groupId>
-	<artifactId>utils-mail-dkim</artifactId>
-	<version>3.3.0</version>
+    <groupId>org.simplejavamail</groupId>
+    <artifactId>utils-mail-dkim</artifactId>
+    <version>3.3.0</version>
 </dependency>
 ```
 
-## Change history
+The library targets Java 8 and uses `jakarta.mail` APIs. Its dependencies include Jakarta Mail API, Angus Mail, and Bouncy Castle. For JPMS applications, the JAR declares the automatic module name `org.simplejavamail.utils.mail.dkim`.
 
-v3.3.0 (05-07-2026)
+`3.3.0` is the published version shown here. Changes on the current development branch are listed separately under [Unreleased](CHANGELOG.md#unreleased).
 
-- Added `DomainKeyUtil.setDnsProviderUrl(...)` and `DomainKeyUtil.getDnsProviderUrl()` to configure the JNDI DNS provider used for DKIM domain-key TXT lookups, resolving [#3](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/3).
-- Fixed the published `Automatic-Module-Name` to `org.simplejavamail.utils.mail.dkim`, closing [#9](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/9) and incorporating [#5](https://github.com/simple-java-mail/java-utils-mail-dkim/pull/5).
-- Kept packaged JARs free of JaCoCo offline instrumentation, resolving [#6](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/6).
-- Migrated release publishing from legacy OSSRH staging to the Maven Central Portal, with CircleCI configured to auto-publish Central deployments.
-- No breaking API changes: existing DNS lookup behavior remains the default unless a DNS provider URL is configured.
+## Quick start
 
-
-v3.2.0 - v3.2.2
-
-- 3.2.2: 18-04-2025: update bcpkix-jdk18on dependency to version 1.78.1
-- 3.2.1: 13-04-2025: [#8](https://github.com/simple-java-mail/java-utils-mail-dkim/pull/8) resolve vulnerability by migrating from net.i2p.crypto.eddsa to org.bouncycastle.bcpkix-jdk18on
-    - resolves [#7](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/7) CVE-2020-36843 Vulnerability
-- 3.2.0: 04-05-2024: Bumped angus-mail from 2.0.2 to 2.0.3
-- 3.2.0: 04-05-2024: Upgraded release pipeline
-- 3.2.0: 04-05-2024: Updated parent pom, which upgraded to Junit 5
-
-
-v3.1.0 - v3.1.1
-
-- 3.1.1: 04-05-2024: Bumped jakarta.mail-api version from 2.1.2 to 2.1.3
-- 3.1.0: 17-01-2024: [#4](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/4) Update to latest Jakarta+Angus dependencies
-
-
-v3.0.0 (28-12-2021)
-
-- Initial release under the new home of Simple Java Mail, with Jakarta Mail 2.0.1 and CircleCI release pipeline
-- Resolved a few minor Spotbugs errors
-
-# Original documenation follows:
-
-## Overview
-
-This library allows you to
-
- - sign MIME Messages according to the DKIM standard,
- - check, whether the DNS resource record for a sending domain is prepared correctly for DKIM.
-
-Consult the [usage description](#usage) and [Javadoc](http://markenwerk.github.io/java-utils-mail-dkim/index.html) for further information.
-
-
-## Origin and state
-
-The initial version of this library is based on a project called [DKIM for JavaMail](http://www.agitos.de/dkim-for-javamail/), which allows to sign MIME Messages according to the DKIM standard and fetch the corresponding DNS resource record.
-This library extended the DNS resource record check  and integrated it in the signing procedure (this is enabled by default, but can be turned off). In addition to retrieving the corresponding DNS resource record for a signing domain and a selector, the check now tests the following, before signing a MIME message:
-
- - Check, whether the retrieved public key fits to the given private key.
- - Check, whether the retrieved DKIM granularity fits to the given DKIM identity.
- - Check, whether the retrieved DKIM version is `DKIM1`.
- - Check, whether the retrieved DKIM service type includes `email`.
-
-### Setup
-
-In order to use DKIM, it is necessary to create a RSA key pair and publish the public key in an appropriate DNS entry.
-
-A RSA private pair with a key size of 1024 bits can be generated as a PEM encoded PKCS8 file like this:
-
-```shell
-openssl genrsa -out dkim.pem 1024
-```
-
-While DKIM should be compatible with any reasonable key size, it might not be possible to publish arbitrary large public keys. See [section 3.3.3.](https://tools.ietf.org/html/rfc6376#section-3.3.3) of the RFC for further information on key sizes. 
-
-Javas standard API only allows to import PKCS8 files in unencrypted PEM encoding. Therefore, it is either necessary to use a third party library like the Java version of [The Legion of the Bouncy Castle](http://www.bouncycastle.org/java.html) or to convert the PEM encoded file into an unencrypted DER encoded file like this:
-
-```shell
-openssl pkcs8 -topk8 -nocrypt -in dkim.pem -outform der -out dkim.der
-```
-
-The corresponding public key can be obtained from the private key like this:
-
-```shell
-openssl rsa -in dkim.pem -pubout
-```
-
-This yields an output like this:
-
-```shell
-writing RSA key
------BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCf4lvVllV2eoDqxartI0bUiJXD
-v+TVhFoGcheKocQyLGrTi8BKamhoDt8yKiecpCm1rZ/nRyxSqIAJFMV3y/XslSVV
-2Sc48efPtrdViGUcGYNCC/KrqYNgCF7vRO2oAQ7ePPBohwcR1hzavGeY/AVxpEeI
-vixQNmunxkdaqHCLuQIDAQAB
------END PUBLIC KEY-----
-```
-
-The content of the DNS resource record consists of a set of keys and values, where a typical DNS resource record has values for following keys:
-
- - `v`: The DKIM version, currently `DKIM1`.
- - `g`: The DKIM granularity, used to restrict the allowed sender identities, usualy `*`. 
- - `k`: The key type, usualy `rsa`.
- - `p`: The Base64 encoded public key, usualy a RSA public key.
- - `s`: The allowed service types, usualy `email` or `*`. 
- - `t`: Some flags used by DKIM validators.
- 
-See [section 3.6.1.](https://tools.ietf.org/html/rfc6376#section-3.6.1) of the RFC for further information
-
-To publish such a public key, i.e. for the domain `example.com` and the selector `foo`, it is necessary to create a DNS resource record  with type `TXT` for the domain `foo._domainkey.example.com` with the following content:
-
-```
-v=DKIM1;g=*;k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCf4lvV
-llV2eoDqxartI0bUiJXDv+TVhFoGcheKocQyLGrTi8BKamhoDt8yKiecpCm1rZ/n
-RyxSqIAJFMV3y/XslSVV2Sc48efPtrdViGUcGYNCC/KrqYNgCF7vRO2oAQ7ePPBo
-hwcR1hzavGeY/AVxpEeIvixQNmunxkdaqHCLuQIDAQAB;s=email;t=s
-```
-
-### Helpful tools
-
-You can use [http://dkimcore.org/tools/dkimrecordcheck.html](http://dkimcore.org/tools/dkimrecordcheck.html) to examine the DNS resource record for a given domain and a given selector and [http://dkimvalidator.com/](http://dkimvalidator.com/) to verify, that correct DKIM signatures are generated. 
-
-## Usage
-
-We will assume that you already know how to create a SMTP [`Session`][Session] and how create and send a MIME Message with JavaMail, but here is a minimal example how one could send a simple message:
+Use your existing SMTP `Session` and an RSA private key in **unencrypted PKCS#8 DER** format. Publish the matching public key at `mail._domainkey.example.com` before sending.
 
 ```java
-public void sendMail(Session session, String from, String to, String subject, String content) throws Exception {
-	MimeMessage message = new MimeMessage(session);
-	message.setFrom(new InternetAddress(from));
-	message.setRecipient(RecipientType.TO, new InternetAddress(to));
-	message.setSubject(subject);
-	message.setContent(content, "text/plain; charset=utf-8");
-	MimeMessage dkimSignedMessage = dkimSignMessage(message, from, "example.com", "foo");
-	Transport.send(dkimSignedMessage);
+import jakarta.mail.Message;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+import org.simplejavamail.utils.mail.dkim.DkimMessage;
+import org.simplejavamail.utils.mail.dkim.DkimSigner;
+
+import java.io.File;
+
+public class SignedMail {
+    // Configure once and reuse for messages signed by this domain and selector.
+    public static DkimSigner createSigner(File privateKey) throws Exception {
+        DkimSigner signer = new DkimSigner("example.com", "mail", privateKey);
+        signer.setIdentity("sender@example.com");
+        return signer;
+    }
+
+    public static void send(Session session, DkimSigner signer) throws Exception {
+        MimeMessage message = new MimeMessage(session);
+        message.setFrom(new InternetAddress("sender@example.com"));
+        message.setRecipient(Message.RecipientType.TO,
+                new InternetAddress("recipient@example.net"));
+        message.setSubject("A signed message", "UTF-8");
+        message.setText("Hello from Jakarta Mail.", "UTF-8");
+
+        Transport.send(new DkimMessage(message, signer));
+    }
 }
 ```
 
-To sign [`MimeMessage`][MimeMessage] with DKIM, you have to configure a [`DkimSigner`][DkimSigner], which can be used multiple times, and create a new [`DkimMessage`][DkimMessage] from the original [`MimeMessage`][MimeMessage] and the [`DkimSigner`][DkimSigner].
+`DkimMessage` is an Angus `SMTPMessage` and can be passed to normal Jakarta Mail transport APIs. The signature is generated when the message is serialized, for example during `Transport.send(...)` or `writeTo(...)`. DNS validation and signing failures therefore occur at that point, rather than when the wrapper is constructed.
+
+Finish configuring the signer before sharing it. Create a separate `DkimMessage` for each message and let it write the signed content; changes made by a downstream relay to signed headers or body can invalidate the signature.
+
+## Configuration and defaults
+
+Existing setters are optional; a new RSA signer uses the following defaults:
+
+| Setting | Default | Configuration |
+| --- | --- | --- |
+| Signing algorithm | `SHA256_WITH_RSA` | `setSigningAlgorithm(...)` |
+| Header canonicalization | `RELAXED` | `setHeaderCanonicalization(...)` |
+| Body canonicalization | `SIMPLE` | `setBodyCanonicalization(...)` |
+| Domain-key check | Enabled | `setCheckDomainKey(...)` |
+| Identity (`i=`) | Omitted | `setIdentity(...)` |
+| Body length (`l=`) | Omitted | `setLengthParam(...)` |
+| Header-field copies (`z=`) | Omitted | `setCopyHeaderFields(...)` |
+
+For example, to change canonicalization while retaining the other defaults:
 
 ```java
-private MimeMessage dkimSignMessage(MimeMessage message, String from, String signingDomain, String selector)  throws Exception {
-	DkimSigner dkimSigner = new DkimSigner(signingDomain, selector, getDkimPrivateKeyFileForSender(from));
-	dkimSigner.setIdentity(from);
-	dkimSigner.setHeaderCanonicalization(Canonicalization.SIMPLE);
-	dkimSigner.setBodyCanonicalization(Canonicalization.RELAXED);
-	dkimSigner.setSigningAlgorithm(SigningAlgorithm.SHA256_WITH_RSA);
-	dkimSigner.setLengthParam(true);
-	dkimSigner.setCopyHeaderFields(false);
-	return new DkimMessage(message, dkimSigner);
-}
+signer.setHeaderCanonicalization(Canonicalization.RELAXED);
+signer.setBodyCanonicalization(Canonicalization.RELAXED);
 ```
 
-When the message is signed, a check is performed to check, whether the DNS resource record for the given domain and the given selector is prepared correctly for DKIM, i.e. if the given identity matches the configured granularity and if the given private key matches the configured public key. A [`DkimAcceptanceException`][DkimAcceptanceException] is thrown otherwise. *Please be aware, that this happens during `Transport.send(dkimSignedMessage)`.*
+`Canonicalization` and `SigningAlgorithm` are in `org.simplejavamail.utils.mail.dkim`.
 
-To disable this check, which is not recommended, call `dkimSigner.setCheckDomainKey(false)`. Using the [`DomainKeyUtil`][DomainKeyUtil], you can perform this check manually like this:
+The default header set covers addressing, subject, date, message identifiers, MIME metadata, reply/reference fields, and mailing-list headers when present. Use `addHeaderToSign(...)` and `removeHeaderToSign(...)` to customize it. `From` is mandatory and cannot be removed. See [DkimSigner Javadoc](https://www.javadoc.io/doc/org.simplejavamail/utils-mail-dkim/latest/org/simplejavamail/utils/mail/dkim/DkimSigner.html) for the API.
+
+The file and stream constructors load RSA PKCS#8 DER keys; the stream constructor closes its input. Alternatively, pass an `RSAPrivateKey` directly. The Ed25519 constructor accepts Bouncy Castle's `EdDSAPrivateKey` and selects `SHA256_WITH_ED25519`. The algorithm must match the key type. Repairs to the existing Ed25519 path are currently [unreleased](CHANGELOG.md#unreleased); the published `3.3.0` dependency does not contain those fixes.
+
+`SHA1_WITH_RSA` remains available for compatibility. Use RSA-SHA256 for new RSA deployments: [RFC 8301](https://www.rfc-editor.org/rfc/rfc8301#section-3.1) prohibits SHA-1 for DKIM. This documentation guidance does not change the library's supported algorithms or defaults.
+
+## Publish an RSA domain key
+
+Generate a 2048-bit RSA key and convert the private key for the file/stream constructors:
+
+```shell
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out dkim-private.pem
+openssl pkcs8 -topk8 -nocrypt -in dkim-private.pem -outform DER -out dkim-private.der
+openssl pkey -in dkim-private.pem -pubout -out dkim-public.pem
+```
+
+The 2048-bit size follows [RFC 8301](https://www.rfc-editor.org/rfc/rfc8301#section-3.2). Keep the private key private. Only the public key belongs in DNS.
+
+For signing domain `example.com` and selector `mail`, create a TXT record at `mail._domainkey.example.com`:
+
+```text
+v=DKIM1; k=rsa; p=BASE64_PUBLIC_KEY
+```
+
+Replace `BASE64_PUBLIC_KEY` with the content of the public-key PEM, excluding the `BEGIN`/`END` lines and line breaks. If your DNS host splits long TXT values into quoted strings, keep those strings within one TXT record. The record format is specified in [RFC 6376](https://www.rfc-editor.org/rfc/rfc6376#section-3.6.1).
+
+## Domain-key validation and DNS
+
+Before signing, the default domain-key check loads the selector's TXT record and validates its version, service type, identity granularity, and correspondence to the private key. You can perform the same check explicitly:
 
 ```java
-DomainKey domainKey = DomainKeyUtil.getDomainKey(signingDomain, selector);
-domainKey.check(from, getDkimPrivateKeyFileForSender(from));
+DomainKey domainKey = DomainKeyUtil.getDomainKey("example.com", "mail");
+domainKey.check("sender@example.com", rsaPrivateKey);
 ```
 
-If the JVM default DNS resolver is not suitable for DKIM TXT lookups, configure
-the JNDI DNS provider URL before signing or manually checking the domain key:
+`DomainKey` and `DomainKeyUtil` are in `org.simplejavamail.utils.mail.dkim`; `rsaPrivateKey` is your loaded `RSAPrivateKey`.
+
+DNS lookups use JNDI and the default DNS provider unless configured otherwise. Since `3.3.0`, a process-wide override is available:
 
 ```java
-DomainKeyUtil.setDnsProviderUrl("dns://8.8.8.8");
+DomainKeyUtil.setDnsProviderUrl("dns://192.0.2.53"); // Replace with your DNS server.
 ```
+
+Configure this before using the signer. Pass `null` to restore the default provider. `DomainKeyUtil.getDnsProviderUrl()` reports the current override.
+
+If your application deliberately manages domain-key validation separately, `signer.setCheckDomainKey(false)` disables the automatic check. Signing is still performed, but the library will no longer confirm that DNS matches the signing key.
+
+## Building and contributing
+
+Use Maven from the repository root. The full verification lane runs on JDK 8:
+
+```shell
+mvn verify '-Dmaven.javadoc.skip=true' '-Djacoco.skip=true' '-Dlicense.skip=true'
+```
+
+For a JDK 21 runtime check, add `-Dspotbugs.skip=true`; the inherited analyzer does not support that JDK. Full static analysis still runs in the JDK 8 lane. See [compatibility and verification](docs/COMPATIBILITY.md) for the preserved contracts and deferred behavioral changes.
+
+For a focused test run:
+
+```shell
+mvn -Dtest=DkimMessageTest test
+```
+
+Tests cover canonicalization, domain-key parsing and validation, signer configuration, and serialized signed messages. Golden fixtures protect established message bytes; additional signature checks validate results independently. Test keys are fixtures only. See [AGENTS.md](AGENTS.md) for compatibility and contribution conventions and [MAINTAINER_WORKFLOW.md](MAINTAINER_WORKFLOW.md) for the release process.
+
+The implementation keeps three responsibilities separate: `DkimMessage` integrates with MIME serialization; `DkimSigner` owns signing configuration and signature assembly; `DomainKey` and `DomainKeyUtil` validate and retrieve public keys. Internal helpers handle cryptographic operations, canonicalization, and DNS details. Public API classes remain in `org.simplejavamail.utils.mail.dkim`.
+
+Report reproducible problems through [GitHub issues](https://github.com/simple-java-mail/java-utils-mail-dkim/issues), including the library and Java versions, canonicalization settings, and a sanitized message example when relevant. Preserve exact message bytes when investigating a signature mismatch.
+
+## Origins and license
+
+Maintained by [Simple Java Mail](https://github.com/simple-java-mail). This project continues the archived [markenwerk/java-utils-mail-dkim](https://github.com/markenwerk/java-utils-mail-dkim), which grew from Florian Sager's DKIM for JavaMail project. Original development is credited in the source and project metadata.
+
+Licensed under the [Apache License 2.0](LICENSE-2.0.txt). See [NOTICE](NOTICE).
