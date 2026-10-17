@@ -1,8 +1,8 @@
 # Patch compatibility and verification
 
-The current maintenance work repairs existing functionality without requiring
-callers to change their code or configuration. It does not publish a release;
-the POM and README dependency example remain at `3.3.0`.
+The `3.3.1` patch repairs existing functionality without requiring callers to
+change their code or configuration. The contracts below describe compatibility
+with the preceding `3.3.0` release.
 
 ## Preserved contracts
 
@@ -28,7 +28,7 @@ the POM and README dependency example remain at `3.3.0`.
 ## Intentional bug-fix differences
 
 Incorrect signatures necessarily change when corrected. The affected cases are
-listed in [Unreleased](../CHANGELOG.md#unreleased): non-UTF-8 MIME bytes and `l=`
+listed in the [3.3.1 release notes](../CHANGELOG.md#331-17-october-2026): non-UTF-8 MIME bytes and `l=`
 counts, raw headers under simple canonicalization, omitted output headers,
 locale-sensitive protocol tokens, shared cryptographic state, Ed25519 signing,
 and long copied header fields. Existing caller code uses the same APIs.

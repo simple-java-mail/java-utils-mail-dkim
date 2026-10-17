@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.3.1 (17 October 2026)
 
 - Existing public and protected APIs, signing defaults, Java 8 compatibility, and dependency versions remain unchanged. Callers need no migration. Previously incorrect signatures change for the affected inputs; see [compatibility boundaries](docs/COMPATIBILITY.md).
 - Correct MIME body hashing and optional `l=` byte counts for non-UTF-8 8-bit content, preserve raw header whitespace under simple canonicalization, and exclude headers omitted by `writeTo(...)` from the signature ([#14](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/14), [#15](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/15), [#16](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/16)). The transmitted body bytes are preserved.
@@ -9,7 +9,6 @@
 - Close DNS resources reliably, avoid holding the global configuration lock during network lookups, and correct cache expiration and DNS-provider configuration races ([#18](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/18), [#19](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/19), [#20](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/20)).
 - Accept valid whitespace and folded public-key values in DNS records without letting extension tags overwrite known tags ([#21](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/21)).
 - Encode long copied header fields (`z=`) using legal DKIM folding rather than MIME quoted-printable soft breaks ([#23](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/23)).
-- Keep golden-message tests deterministic across timezones and Git checkout settings, and expand regression coverage with independent signature verification, RFC vectors, concurrent signing, MIME encodings, and controlled DNS failures ([#11](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/11)).
 
 ## 3.3.0 (5 July 2026)
 

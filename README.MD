@@ -21,13 +21,13 @@ This library signs outgoing messages and checks domain-key records. It does not 
 <dependency>
     <groupId>org.simplejavamail</groupId>
     <artifactId>utils-mail-dkim</artifactId>
-    <version>3.3.0</version>
+    <version>3.3.1</version>
 </dependency>
 ```
 
 The library targets Java 8 and uses `jakarta.mail` APIs. Its dependencies include Jakarta Mail API, Angus Mail, and Bouncy Castle. For JPMS applications, the JAR declares the automatic module name `org.simplejavamail.utils.mail.dkim`.
 
-`3.3.0` is the published version shown here. Changes on the current development branch are listed separately under [Unreleased](CHANGELOG.md#unreleased).
+`3.3.1` is a patch release with no caller migration. See the [release notes](CHANGELOG.md#331-17-october-2026) for the corrected signing and DNS behavior.
 
 ## Quick start
 
@@ -94,7 +94,7 @@ signer.setBodyCanonicalization(Canonicalization.RELAXED);
 
 The default header set covers addressing, subject, date, message identifiers, MIME metadata, reply/reference fields, and mailing-list headers when present. Use `addHeaderToSign(...)` and `removeHeaderToSign(...)` to customize it. `From` is mandatory and cannot be removed. See [DkimSigner Javadoc](https://www.javadoc.io/doc/org.simplejavamail/utils-mail-dkim/latest/org/simplejavamail/utils/mail/dkim/DkimSigner.html) for the API.
 
-The file and stream constructors load RSA PKCS#8 DER keys; the stream constructor closes its input. Alternatively, pass an `RSAPrivateKey` directly. The Ed25519 constructor accepts Bouncy Castle's `EdDSAPrivateKey` and selects `SHA256_WITH_ED25519`. The algorithm must match the key type. Repairs to the existing Ed25519 path are currently [unreleased](CHANGELOG.md#unreleased); the published `3.3.0` dependency does not contain those fixes.
+The file and stream constructors load RSA PKCS#8 DER keys; the stream constructor closes its input. Alternatively, pass an `RSAPrivateKey` directly. The Ed25519 constructor accepts Bouncy Castle's `EdDSAPrivateKey` and selects `SHA256_WITH_ED25519`. The algorithm must match the key type. The Ed25519 path signs the SHA-256 header hash and accepts standard raw DNS public keys, retaining legacy X.509 key support.
 
 `SHA1_WITH_RSA` remains available for compatibility. Use RSA-SHA256 for new RSA deployments: [RFC 8301](https://www.rfc-editor.org/rfc/rfc8301#section-3.1) prohibits SHA-1 for DKIM. This documentation guidance does not change the library's supported algorithms or defaults.
 
