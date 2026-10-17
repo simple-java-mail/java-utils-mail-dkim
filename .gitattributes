@@ -1,0 +1,3 @@
+# DKIM fixtures contain intentional LF, CRLF, mixed endings and arbitrary bytes.
+# Preserve their exact bytes on every platform; never normalize signed messages.
+/src/test/resources/** -text

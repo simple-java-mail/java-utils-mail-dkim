@@ -3,28 +3,41 @@ package org.simplejavamail.utils.mail.dkim;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.Random;
+import java.util.TimeZone;
+import java.util.stream.Stream;
 
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class DkimMessageTest {
+
+	private TimeZone originalTimeZone;
 
 	/**
 	 * create DKIM messages at certain moment, then store those messages as "valid
 	 * message".
 	 */
 	public static void main(String[] args) throws Exception {
-		System.setProperty("user.timezone", "UTC");
+		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 		createRandomBodies();
 		createSignedMessages();
 	}
@@ -34,16 +47,16 @@ public class DkimMessageTest {
 		for (int i = 0; i < 50; i++) {
 			int length = random.nextInt(2000) + 100;
 			String body = Utils.randomString(random, length);
-			Utils.write(new File("./src/test/resources/body", "random" + (i + 1) + ".txt"), body.getBytes());
+			Utils.write(new File("./src/test/resources/body", "random" + (i + 1) + ".txt"), body.getBytes(StandardCharsets.US_ASCII));
 		}
 	}
 
 	private static void createSignedMessages() throws Exception {
 		File[] files = new File("./src/test/resources/body").listFiles();
 		for (File file : files) {
-			String body = new String(Utils.read(file));
+			String body = new String(Utils.read(file), StandardCharsets.US_ASCII);
 			for (Canonicalization canonicalization : Canonicalization.values()) {
-				for (SigningAlgorithm algorithm : SigningAlgorithm.values()) {
+				for (SigningAlgorithm algorithm : rsaAlgorithms()) {
 					createSignedMessage(canonicalization, algorithm, body, file);
 				}
 			}
@@ -59,36 +72,52 @@ public class DkimMessageTest {
 
 	@BeforeEach
 	public void fixateSystemTimeZone() {
-		System.setProperty("user.timezone", "UTC");
+		originalTimeZone = TimeZone.getDefault();
+		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 	}
 
-	@Test
-	public void checkCreatesSameMessageAsBefore() throws Exception {
+	@AfterEach
+	public void restoreSystemTimeZone() {
+		TimeZone.setDefault(originalTimeZone);
+	}
+
+	private static Stream<Arguments> goldenMessages() throws IOException {
 		File[] files = new File("./src/test/resources/body").listFiles();
+		if (files == null) {
+			throw new IOException("Could not list message body fixtures");
+		}
+		Arrays.sort(files, Comparator.comparing(File::getName));
+		List<Arguments> cases = new ArrayList<Arguments>();
 		for (File file : files) {
-			String body = new String(Utils.read(file));
 			for (Canonicalization canonicalization : Canonicalization.values()) {
-				for (SigningAlgorithm algorithm : new SigningAlgorithm[] {SigningAlgorithm.SHA1_WITH_RSA, SigningAlgorithm.SHA256_WITH_RSA}) {
-					checkCreatesSameMessageAsBefore(canonicalization, algorithm, body, file);
+				for (SigningAlgorithm algorithm : rsaAlgorithms()) {
+					cases.add(Arguments.of(file, canonicalization, algorithm));
 				}
 			}
 		}
+		return cases.stream();
 	}
 
-	private void checkCreatesSameMessageAsBefore(Canonicalization canonicalization, SigningAlgorithm algorithm,
-			String body, File file) throws Exception {
+	private static SigningAlgorithm[] rsaAlgorithms() {
+		return new SigningAlgorithm[] {SigningAlgorithm.SHA1_WITH_RSA, SigningAlgorithm.SHA256_WITH_RSA};
+	}
 
+	@ParameterizedTest(name = "{0}: {1}, {2}")
+	@MethodSource("goldenMessages")
+	public void checkCreatesSameMessageAsBefore(File file, Canonicalization canonicalization, SigningAlgorithm algorithm) throws Exception {
+
+		String body = new String(Utils.read(file), StandardCharsets.US_ASCII);
 		String folderName = getFolderName(canonicalization, algorithm);
 		byte[] expected = Utils.read(new File("./src/test/resources/" + folderName, file.getName()));
 		byte[] actual = writeMessage(Utils.getSigner(canonicalization, algorithm), body);
 
-		String configuration = canonicalization.name() + " " + algorithm.getHashNotation().toUpperCase();
+		String configuration = canonicalization.name() + " " + algorithm.getHashNotation().toUpperCase(Locale.ROOT);
 		assertArrayEquals(expected, actual, configuration + " / " + file.getName());
 	}
 
 	private static String getFolderName(Canonicalization canonicalization, SigningAlgorithm algorithm) {
 		int index = algorithm.getDkimNotation().indexOf("-") + 1;
-		return algorithm.getDkimNotation().substring(index) + "_" + canonicalization.name().toLowerCase();
+		return algorithm.getDkimNotation().substring(index) + "_" + canonicalization.name().toLowerCase(Locale.ROOT);
 	}
 
 	private static byte[] writeMessage(DkimSigner dkimSigner, String body) throws Exception {

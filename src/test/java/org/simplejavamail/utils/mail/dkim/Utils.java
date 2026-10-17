@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -52,7 +53,7 @@ class Utils {
 	static String digest(String string, String algorithm) throws IOException, NoSuchAlgorithmException {
 		MessageDigest digest = MessageDigest.getInstance(algorithm);
 		DigestOutputStream out = new DigestOutputStream(new NullOutputStream(), digest);
-		new BufferedDataFetcher().copy(new ByteArrayInputStream(string.getBytes()), out, true, true);
+		new BufferedDataFetcher().copy(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)), out, true, true);
 		return Base64.getEncoder().encodeToString(digest.digest());
 	}
 
