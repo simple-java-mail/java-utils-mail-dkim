@@ -2,16 +2,9 @@ package org.simplejavamail.utils.mail.dkim;
 
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
+import java.util.function.LongSupplier;
 
 /**
  * @author Torsten Krause (tk at markenwerk dot net)
@@ -22,13 +15,24 @@ public final class DomainKeyUtil {
 
    private static final Map<String, DomainKey> CACHE = new HashMap<String, DomainKey>();
 
-   private static final Pattern RECORD_PATTERN = Pattern
-         .compile("(?:\"(.*?)\"(?: |$))|(?:'(.*?)'(?: |$))|(?:(.*?)(?: |$))");
+   private static final DnsTxtRecordLookup DNS_LOOKUP = new DnsTxtRecordLookup();
+
+   // Serialize lookups for a record without holding the global configuration lock
+   // during DNS access. A fixed array avoids retaining a lock for every selector.
+   private static final Object[] LOOKUP_LOCKS = new Object[32];
+
+   static {
+      for (int i = 0; i < LOOKUP_LOCKS.length; i++) {
+         LOOKUP_LOCKS[i] = new Object();
+      }
+   }
 
    private static final long DEFAULT_CACHE_TTL = 2 * 60 * 60 * 1000;
 
    private static long cacheTtl = DEFAULT_CACHE_TTL;
    private static String dnsProviderUrl;
+   private static long cacheGeneration;
+   private static long lastCleanupTimestamp;
 
    private DomainKeyUtil() {
    }
@@ -52,6 +56,11 @@ public final class DomainKeyUtil {
          cacheTtl = DEFAULT_CACHE_TTL;
       }
       DomainKeyUtil.cacheTtl = cacheTtl;
+      lastCleanupTimestamp = 0;
+      if (cacheTtl == 0) {
+         cacheGeneration++;
+         CACHE.clear();
+      }
    }
 
    /**
@@ -79,6 +88,8 @@ public final class DomainKeyUtil {
       }
 
       DomainKeyUtil.dnsProviderUrl = normalizedDnsProviderUrl;
+      cacheGeneration++;
+      lastCleanupTimestamp = 0;
       CACHE.clear();
    }
 
@@ -93,23 +104,59 @@ public final class DomainKeyUtil {
     *                       of the retrieved domain key is incompatible to this
     *                       library ('DKIM1', 'RSA' and 'email' respectively).
     */
-   public static synchronized DomainKey getDomainKey(String signingDomain, String selector) throws DkimException {
-      return getDomainKey(getRecordName(signingDomain, selector));
+   public static DomainKey getDomainKey(String signingDomain, String selector) throws DkimException {
+      return getDomainKey(getRecordName(signingDomain, selector), DNS_LOOKUP);
    }
 
-   private static synchronized DomainKey getDomainKey(String recordName) throws DkimException {
-      DomainKey domainKey = CACHE.get(recordName);
-      if (null != domainKey && 0 != cacheTtl && isRecent(domainKey)) {
-         return domainKey;
-      } else {
-         domainKey = new DomainKey(getTags(recordName));
-         CACHE.put(recordName, domainKey);
+   static DomainKey getDomainKey(String recordName, DnsTxtRecordLookup lookup) throws DkimException {
+      return getDomainKey(recordName, lookup, System::currentTimeMillis);
+   }
+
+   static DomainKey getDomainKey(String recordName, DnsTxtRecordLookup lookup, LongSupplier clock) throws DkimException {
+      Object lookupLock = LOOKUP_LOCKS[(recordName.hashCode() & Integer.MAX_VALUE) % LOOKUP_LOCKS.length];
+      synchronized (lookupLock) {
+         long generation;
+         Hashtable<String, String> environment;
+         synchronized (DomainKeyUtil.class) {
+            long now = clock.getAsLong();
+            // Sweep on cache hits as well, so a busy selector cannot retain
+            // expired entries for selectors that are never requested again.
+            if (now - lastCleanupTimestamp >= Math.min(cacheTtl, 60_000L)) {
+               removeExpiredKeys(now);
+               lastCleanupTimestamp = now;
+            }
+            DomainKey cached = CACHE.get(recordName);
+            if (cached != null && cacheTtl != 0 && isRecent(cached, now)) {
+               return cached;
+            }
+            CACHE.remove(recordName);
+            generation = cacheGeneration;
+            environment = getEnvironment();
+         }
+
+         DomainKey domainKey = new DomainKey(DomainKeyRecord.parseTags(lookup.lookup(recordName, environment), recordName),
+               clock.getAsLong());
+         synchronized (DomainKeyUtil.class) {
+            if (generation == cacheGeneration && cacheTtl != 0) {
+               CACHE.put(recordName, domainKey);
+            }
+         }
          return domainKey;
       }
    }
 
-   private static boolean isRecent(DomainKey domainKey) {
-      return domainKey.getTimestamp() + cacheTtl > System.currentTimeMillis();
+   private static boolean isRecent(DomainKey domainKey, long now) {
+      return now - domainKey.getTimestamp() < cacheTtl;
+   }
+
+   private static void removeExpiredKeys(long now) {
+      Iterator<DomainKey> keys = CACHE.values().iterator();
+      while (keys.hasNext()) {
+         DomainKey key = keys.next();
+         if (cacheTtl == 0 || !isRecent(key, now)) {
+            keys.remove();
+         }
+      }
    }
 
    /**
@@ -121,23 +168,8 @@ public final class DomainKeyUtil {
     * @throws DkimException If the domain key couldn't be retrieved.
     */
    public static Map<Character, String> getTags(String signingDomain, String selector) throws DkimException {
-      return getTags(getRecordName(signingDomain, selector));
-   }
-
-   private static Map<Character, String> getTags(String recordName) throws DkimException {
-      Map<Character, String> tags = new HashMap<Character, String>();
-
-      String recordValue = getValue(recordName);
-
-      for (String tag : recordValue.split(";")) {
-         try {
-            tag = tag.trim();
-            tags.put(tag.charAt(0), tag.substring(2));
-         } catch (IndexOutOfBoundsException e) {
-            throw new DkimException("The tag " + tag + " in RR " + recordName + " couldn't be decoded.", e);
-         }
-      }
-      return tags;
+      String recordName = getRecordName(signingDomain, selector);
+      return DomainKeyRecord.parseTags(DNS_LOOKUP.lookup(recordName, getEnvironment()), recordName);
    }
 
    /**
@@ -149,71 +181,7 @@ public final class DomainKeyUtil {
     * @throws DkimException If the domain key couldn't be retrieved.
     */
    public static String getValue(String signingDomain, String selector) throws DkimException {
-      return getValue(getRecordName(signingDomain, selector));
-   }
-
-   private static String getValue(String recordName) throws DkimException {
-      try {
-         DirContext dnsContext = new InitialDirContext(getEnvironment());
-         Attributes attributes = dnsContext.getAttributes(recordName, new String[] { "TXT" });
-         Attribute txtRecord = attributes.get("txt");
-
-         if (txtRecord == null) {
-            throw new DkimException("There is no TXT record available for " + recordName);
-         }
-
-         StringBuilder builder = new StringBuilder();
-         NamingEnumeration<?> e = txtRecord.getAll();
-         while (e.hasMore()) {
-            builder.append((String) e.next());
-         }
-
-         String value = builder.toString();
-         if (value.isEmpty()) {
-            throw new DkimException("Value of RR " + recordName + " couldn't be retrieved");
-         }
-
-         return unquoteRecordValue(value);
-
-      } catch (NamingException ne) {
-         throw new DkimException("Selector lookup failed", ne);
-      }
-   }
-
-   /*
-    * Unquote a recordValue string.
-    * 
-    * The Java DNS provider does something very odd. In the instance there are
-    * multiple entries for the TXT record, the first is quoted however the second
-    * is unquoted. That makes removing quotes difficult. In the normal case, we
-    * should be a "\" \"" string, however, as confirmed in actual records, the last
-    * item may not be quoted. This seems to happen if there are no spaces.
-    *
-    * @param recordValue Domain record value.
-    * 
-    * @return Domain record value unquoted.
-    */
-   private static String unquoteRecordValue(String recordValue) {
-
-      Matcher recordMatcher = RECORD_PATTERN.matcher(recordValue);
-
-      StringBuilder builder = new StringBuilder();
-      while (recordMatcher.find()) {
-         for (int i = 1; i <= recordMatcher.groupCount(); i++) {
-            String match = recordMatcher.group(i);
-            if (null != match) {
-               builder.append(match);
-            }
-         }
-      }
-
-      String unquotedRecordValue = builder.toString();
-      if (unquotedRecordValue.length() == 0) {
-         throw new DkimException("Unable to parse DKIM record: " + recordValue);
-      }
-
-      return unquotedRecordValue;
-
+      return DNS_LOOKUP.lookup(getRecordName(signingDomain, selector), getEnvironment());
    }
 
    private static String getRecordName(String signingDomain, String selector) {

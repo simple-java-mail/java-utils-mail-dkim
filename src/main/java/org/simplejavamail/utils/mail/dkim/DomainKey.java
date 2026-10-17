@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.bouncycastle.jcajce.interfaces.EdDSAPublicKey;
+import org.bouncycastle.jcajce.spec.RawEncodedKeySpec;
 
 /**
  * A {@code DomainKey} holds the information about a domain key.
@@ -57,8 +58,11 @@ public final class DomainKey {
     *                       'RSA' or 'Ed25519' and 'email' respectively).
     */
    public DomainKey(Map<Character, String> tags) throws DkimException {
+      this(tags, System.currentTimeMillis());
+   }
 
-      this.timestamp = System.currentTimeMillis();
+   DomainKey(Map<Character, String> tags, long timestamp) throws DkimException {
+      this.timestamp = timestamp;
       this.tags = Collections.unmodifiableMap(tags);
 
       String dkimVersionTagValue = getTagValue('v', DKIM_VERSION);
@@ -83,11 +87,7 @@ public final class DomainKey {
          throw new DkimException("Incompatible service type s=" + getTagValue('s') + ".");
       }
 
-      String privateKeyTagValue = getTagValue('p');
-      this.publicKey = getPublicKey(privateKeyTagValue);
-      if (null == privateKeyTagValue) {
-         throw new DkimException("Incompatible public key p=" + getTagValue('p') + ".");
-      }
+      this.publicKey = getPublicKey(getTagValue('p'));
 
    }
 
@@ -136,7 +136,7 @@ public final class DomainKey {
    private RSAPublicKey getRsaPublicKey(String publicKeyTagValue) {
       try {
          KeyFactory keyFactory = KeyFactory.getInstance(KeyPairType.RSA.getJavaNotation());
-         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyTagValue));
+         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(decodePublicKeyValue(publicKeyTagValue));
          return (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
       } catch (NoSuchAlgorithmException nsae) {
          throw new DkimException("RSA algorithm not found by JVM");
@@ -149,16 +149,27 @@ public final class DomainKey {
 
    private EdDSAPublicKey getEd25519PublicKey(String publicKeyTagValue) {
       try {
-         byte[] keyBytes = Base64.getDecoder().decode(publicKeyTagValue);
-         KeyFactory keyFactory = KeyFactory.getInstance(KeyPairType.ED25519.getJavaNotation(), "BC");
+         byte[] keyBytes = decodePublicKeyValue(publicKeyTagValue);
+         KeyFactory keyFactory = KeyFactory.getInstance("Ed25519", "BC");
+         if (keyBytes.length == 32) {
+            // RFC 8463 publishes the raw Ed25519 public key, rather than an
+            // X.509 SubjectPublicKeyInfo wrapper. Keep accepting older wrappers.
+            return (EdDSAPublicKey) keyFactory.generatePublic(new RawEncodedKeySpec(keyBytes));
+         }
          return (EdDSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(keyBytes));
       } catch (NoSuchAlgorithmException | NoSuchProviderException nsae) {
          throw new DkimException("Ed25519 algorithm not found by JVM");
       } catch (IllegalArgumentException e) {
          throw new DkimException("The public key " + publicKeyTagValue + " couldn't be read.", e);
-      } catch (InvalidKeySpecException e) {
+      } catch (InvalidKeySpecException | IndexOutOfBoundsException e) {
+         // BC may inspect a truncated X.509 encoding before validating its length.
          throw new DkimException("The public key " + publicKeyTagValue + " couldn't be decoded.", e);
       }
+   }
+
+   private byte[] decodePublicKeyValue(String value) {
+      // DKIM permits folding whitespace inside the base64 key (RFC 6376, 3.6.1).
+      return Base64.getDecoder().decode(value.replaceAll("[ \\t\\r\\n]", ""));
    }
 
    private Pattern getGranularityPattern(String granularity) {
@@ -254,7 +265,7 @@ public final class DomainKey {
     */
    public void check(String identity, PrivateKey privateKey) throws DkimSigningException {
       checkIdentity(identity);
-      checkKeyCompatiblilty(privateKey);
+      checkKeyCompatibility(privateKey);
    }
 
    private void checkIdentity(String identity) throws DkimAcceptanceException {
@@ -268,19 +279,19 @@ public final class DomainKey {
       }
    }
 
-   private void checkKeyCompatiblilty(PrivateKey privateKey)
+   private void checkKeyCompatibility(PrivateKey privateKey)
          throws DkimSigningException {
 
       try {
 
          SigningAlgorithm signingAlgorithm = keyPairType.getDefaultSigningAlgorithm();
          
-         Signature signingSignature = Signature.getInstance(signingAlgorithm.getJavaNotation());
+         Signature signingSignature = getSignature(signingAlgorithm);
          signingSignature.initSign(privateKey);
          signingSignature.update("01189998819991197253".getBytes(UTF_8));
          byte[] signatureBytes = signingSignature.sign();
 
-         Signature verifyingSignature = Signature.getInstance(signingAlgorithm.getJavaNotation());
+         Signature verifyingSignature = getSignature(signingAlgorithm);
          verifyingSignature.initVerify(publicKey);
          verifyingSignature.update("01189998819991197253".getBytes(UTF_8));
 
@@ -288,10 +299,16 @@ public final class DomainKey {
             throw new DkimAcceptanceException("Incompatible private and public key.");
          }
 
-      } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+      } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | SignatureException e) {
          throw new DkimSigningException("Performing cryptography failed.", e);
       }
 
+   }
+
+   private Signature getSignature(SigningAlgorithm algorithm) throws NoSuchAlgorithmException, NoSuchProviderException {
+      return keyPairType == KeyPairType.ED25519
+            ? Signature.getInstance(algorithm.getJavaNotation(), "BC")
+            : Signature.getInstance(algorithm.getJavaNotation());
    }
 
 }
