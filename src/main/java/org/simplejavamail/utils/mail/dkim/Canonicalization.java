@@ -1,5 +1,7 @@
 package org.simplejavamail.utils.mail.dkim;
 
+import java.util.Locale;
+
 /**
  * Provides "simple" and "relaxed" canonicalization according to RFC 4871.
  * 
@@ -52,7 +54,7 @@ public enum Canonicalization {
 	RELAXED {
 
 		public String canonicalizeHeader(String name, String value) {
-			return name.trim().toLowerCase() + ":" + value.replaceAll("\\s+", " ").trim();
+			return name.trim().toLowerCase(Locale.ROOT) + ":" + value.replaceAll("\\s+", " ").trim();
 		}
 
 		public String canonicalizeBody(String body) {
@@ -89,7 +91,7 @@ public enum Canonicalization {
 	};
 
 	public final String getType() {
-		return name().toLowerCase();
+		return name().toLowerCase(Locale.ROOT);
 	}
 
 	public abstract String canonicalizeHeader(String name, String value);

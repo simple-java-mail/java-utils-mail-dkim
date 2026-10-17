@@ -21,9 +21,9 @@ public enum SigningAlgorithm {
    SHA1_WITH_RSA("rsa-sha1", "SHA1withRSA", "sha-1"),
 
    /**
-    * The rsa-sha1 signing algorithm.
+    * The Ed25519-SHA256 signing algorithm (RFC 8463).
     */
-   SHA256_WITH_ED25519("ed25519-sha256", "NONEwithEdDSA", "sha-256");
+   SHA256_WITH_ED25519("ed25519-sha256", "Ed25519", "sha-256");
 
    private final String dkimNotation;
 

@@ -7,7 +7,6 @@ import net.markenwerk.utils.data.fetcher.DataFetchException;
 
 import org.bouncycastle.jcajce.interfaces.EdDSAPrivateKey;
 import org.eclipse.angus.mail.util.CRLFOutputStream;
-import org.eclipse.angus.mail.util.QPEncoderStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,13 +15,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Signature;
-import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -31,7 +27,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +37,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 /**
  * Main class providing a signature according to DKIM RFC 4871.
@@ -106,8 +102,6 @@ public class DkimSigner {
    private final PrivateKey privateKey;
 
    private SigningAlgorithm signingAlgorithm;
-   private MessageDigest messageDigest;
-   private Signature signature;
 
    private Canonicalization headerCanonicalization;
    private Canonicalization bodyCanonicalization;
@@ -277,21 +271,8 @@ public class DkimSigner {
          throw new DkimException("Unsupported signing algorithm: " + signingAlgorithm);
       }
 
-      try {
-         messageDigest = MessageDigest.getInstance(signingAlgorithm.getHashNotation());
-      } catch (NoSuchAlgorithmException e) {
-         throw new DkimException("Unknown hashing algorithm: " + signingAlgorithm.getHashNotation(), e);
-      }
-
-      try {
-         signature = Signature.getInstance(signingAlgorithm.getJavaNotation());
-         signature.initSign(privateKey);
-      } catch (NoSuchAlgorithmException e) {
-         throw new DkimException("Unknown signing algorithm " + signingAlgorithm.getJavaNotation(), e);
-      } catch (InvalidKeyException e) {
-         throw new DkimException("Invalid private key", e);
-      }
-
+      // Validate eagerly as before; retain no mutable cryptographic state.
+      new SigningOperation(keyPairType, signingAlgorithm, privateKey);
       this.signingAlgorithm = signingAlgorithm;
 
    }
@@ -447,6 +428,8 @@ public class DkimSigner {
     */
    protected String sign(DkimMessage message) throws MessagingException {
 
+      SigningOperation operation = new SigningOperation(keyPairType, signingAlgorithm, privateKey);
+
       if (checkDomainKey) {
          checkDomainKey();
       }
@@ -469,11 +452,14 @@ public class DkimSigner {
       StringBuilder headerFieldCopy = new StringBuilder();
       Set<String> mandatoryHeaders = compileMandatoryHeaders();
 
-      for (Header header : compileHeadersToSign(message)) {
+      for (String headerLine : compileHeadersToSign(message)) {
+         Header header = new Header(headerLine.substring(0, headerLine.indexOf(':')).trim(),
+               headerLine.substring(headerLine.indexOf(':') + 1));
          String headerName = header.getName();
          String headerValue = header.getValue();
          headerNames.append(headerName).append(":");
-         headerValues.append(headerCanonicalization.canonicalizeHeader(headerName, headerValue));
+         headerValues.append(headerCanonicalization == Canonicalization.SIMPLE ? headerLine
+               : headerCanonicalization.canonicalizeHeader(headerName, headerValue));
          headerValues.append("\r\n");
          mandatoryHeaders.remove(headerName);
          if (copyHeaderFields) {
@@ -493,15 +479,15 @@ public class DkimSigner {
          signatureData.put("z", headerFieldCopy.substring(0, headerFieldCopy.length() - 1));
       }
 
-      String canonicalBody = canonicalizeBody(message);
+      byte[] canonicalBody = canonicalizeBody(message);
       if (lengthParam) {
-         signatureData.put("l", Integer.toString(canonicalBody.length()));
+         signatureData.put("l", Integer.toString(canonicalBody.length));
       }
-      signatureData.put("bh", base64Encode(messageDigest.digest(canonicalBody.getBytes(UTF_8))));
+      signatureData.put("bh", base64Encode(operation.digest(canonicalBody)));
 
       String serializedSignature = serializeSignature(signatureData);
       headerValues.append(headerCanonicalization.canonicalizeHeader(DKIM_SIGNATUR_HEADER, serializedSignature));
-      byte[] signature = createSignature(headerValues.toString().getBytes(UTF_8));
+      byte[] signature = operation.sign(DkimMessage.getBytes(headerValues.toString()));
 
       return DKIM_SIGNATUR_HEADER + ": " + serializedSignature + fold(base64Encode(signature), 3);
 
@@ -529,57 +515,30 @@ public class DkimSigner {
       return mandatoryHeaders;
    }
 
-   private List<Header> compileHeadersToSign(DkimMessage message) throws DkimSigningException {
-      List<Header> reverseOrderHeaderLines = new LinkedList<Header>();
-      for (Header header : getMessageHeaders(message)) {
-         if (headersToSign.contains(header.getName())) {
-            reverseOrderHeaderLines.add(0, header);
+   private List<String> compileHeadersToSign(DkimMessage message) throws DkimSigningException {
+      List<String> reverseOrderHeaderLines = new LinkedList<String>();
+      try {
+         Enumeration<String> lines = message.getSigningHeaderLines();
+         while (lines.hasMoreElements()) {
+            String line = lines.nextElement();
+            int colon = line.indexOf(':');
+            if (colon >= 0 && headersToSign.contains(line.substring(0, colon).trim())) {
+               reverseOrderHeaderLines.add(0, line);
+            }
          }
+      } catch (MessagingException e) {
+         throw new DkimSigningException("Could not retrieve the header fields for signing", e);
       }
       return reverseOrderHeaderLines;
    }
 
-   private Iterable<Header> getMessageHeaders(DkimMessage message) throws DkimSigningException {
+   private byte[] canonicalizeBody(DkimMessage message) throws DkimSigningException {
       try {
-         return headerIterable(message.getAllHeaders());
-      } catch (MessagingException e) {
-         throw new DkimSigningException("Could not retrieve the header fields for signing", e);
-      }
-   }
-
-   private Iterable<Header> headerIterable(final Enumeration<Header> headers) throws MessagingException {
-      return new Iterable<Header>() {
-
-         @Override
-         public Iterator<Header> iterator() {
-            return headerIterator(headers);
-         }
-
-      };
-   }
-
-   private Iterator<Header> headerIterator(final Enumeration<Header> headers) {
-      return new Iterator<Header>() {
-
-         @Override
-         public boolean hasNext() {
-            return headers.hasMoreElements();
-         }
-
-         @Override
-         public Header next() {
-            return headers.nextElement();
-         }
-
-      };
-   }
-
-   private String canonicalizeBody(DkimMessage message) throws DkimSigningException {
-      try {
-         byte[] bodyBytes = message.getEncodedBody().getBytes(UTF_8);
+         byte[] bodyBytes = message.getEncodedBodyBytes();
          ByteArrayOutputStream buffer = new ByteArrayOutputStream();
          new BufferedDataFetcher().copy(new ByteArrayInputStream(bodyBytes), new CRLFOutputStream(buffer));
-         return bodyCanonicalization.canonicalizeBody(buffer.toString(UTF_8.name()));
+         // A one-to-one octet mapping avoids corrupting existing 8-bit MIME.
+         return bodyCanonicalization.canonicalizeBody(buffer.toString(ISO_8859_1.name())).getBytes(ISO_8859_1);
       } catch (DataFetchException | UnsupportedEncodingException e) {
          throw new DkimSigningException("Failed to canonicalize the line terminators of the message body", e);
       }
@@ -608,15 +567,6 @@ public class DkimSigner {
       builder.append("\r\n\tb=");
       return builder.toString().trim();
 
-   }
-
-   private byte[] createSignature(byte[] bytes) throws DkimSigningException {
-      try {
-         signature.update(bytes);
-         return signature.sign();
-      } catch (SignatureException e) {
-         throw new DkimSigningException("Faild to create signature", e);
-      }
    }
 
    private static String fold(String string, int offset) {
@@ -650,22 +600,27 @@ public class DkimSigner {
       return builder.substring(0, builder.length() - separator.length());
    }
 
-   // FSTODO: converts to "platforms default encoding" might be wrong ?
    private static String quotedPrintable(String s) {
-      try {
-         ByteArrayOutputStream out = new ByteArrayOutputStream();
-         QPEncoderStream encodeStream = new QPEncoderStream(out);
-         encodeStream.write(s.getBytes(UTF_8));
-         encodeStream.close();
-
-         String encoded = out.toString(UTF_8.name());
-         encoded = encoded.replaceAll(";", "=3B");
-         encoded = encoded.replaceAll(" ", "=20");
-
-         return encoded;
-      } catch (IOException e) {
-         return null;
+      StringBuilder encoded = new StringBuilder();
+      String hex = "0123456789ABCDEF";
+      int column = 0;
+      for (byte value : s.getBytes(UTF_8)) {
+         int octet = value & 0xff;
+         boolean literal = octet > 32 && octet < 127 && octet != '=' && octet != ';';
+         int length = literal ? 1 : 3;
+         if (column + length > MAX_HEADER_LENGTH) {
+            // DKIM uses folding whitespace, never MIME's '=CRLF' soft breaks.
+            encoded.append("\r\n\t");
+            column = 1;
+         }
+         if (literal) {
+            encoded.append((char) octet);
+         } else {
+            encoded.append('=').append(hex.charAt(octet >>> 4)).append(hex.charAt(octet & 15));
+         }
+         column += length;
       }
+      return encoded.toString();
    }
 
    private static String base64Encode(byte[] bytes) {

@@ -22,11 +22,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class DkimMessage extends SMTPMessage {
 
-	private static byte[] NL = { (byte) '\r', (byte) '\n' };
+	private static final byte[] NL = { (byte) '\r', (byte) '\n' };
 
-	private DkimSigner signer;
+	private final DkimSigner signer;
 
 	private String encodedBody;
+	private byte[] encodedBodyBytes;
+	private String[] signingIgnoreList;
 
 	/**
 	 * Created a new {@code DkimMessage} from the given {@link MimeMessage} and
@@ -92,14 +94,24 @@ public class DkimMessage extends SMTPMessage {
 			bodyBuffer.close();
 		}
 
-		encodedBody = bodyBuffer.toString(UTF_8.name());
+		byte[] serializedBody = bodyBuffer.toByteArray();
+		encodedBodyBytes = serializedBody;
+		encodedBody = new String(serializedBody, UTF_8);
 
 		// second, sign the message
-		String signatureHeaderLine = signer.sign(this);
+		String signatureHeaderLine;
+		String[] excludedHeaders = ignoreList == null ? null : ignoreList.clone();
+		signingIgnoreList = excludedHeaders;
+		try {
+			signatureHeaderLine = signer.sign(this);
+		} finally {
+			signingIgnoreList = null;
+			encodedBodyBytes = null;
+		}
 
 		// write the 'DKIM-Signature' header, all other headers and a clear \r\n
 		writeln(os, signatureHeaderLine);
-		Enumeration<String> headerLines = getNonMatchingHeaderLines(ignoreList);
+		Enumeration<String> headerLines = getNonMatchingHeaderLines(excludedHeaders);
 		while (headerLines.hasMoreElements()) {
 			writeln(os, headerLines.nextElement());
 		}
@@ -107,7 +119,7 @@ public class DkimMessage extends SMTPMessage {
 		os.flush();
 
 		// write the message body
-		os.write(bodyBuffer.toByteArray());
+		os.write(serializedBody);
 		os.flush();
 	}
 
@@ -118,6 +130,16 @@ public class DkimMessage extends SMTPMessage {
 	 */
 	protected String getEncodedBody() {
 		return encodedBody;
+	}
+
+	byte[] getEncodedBodyBytes() {
+		String body = getEncodedBody();
+		// Preserve the protected extension point used by existing subclasses.
+		return encodedBodyBytes != null && encodedBody.equals(body) ? encodedBodyBytes : body.getBytes(UTF_8);
+	}
+
+	Enumeration<String> getSigningHeaderLines() throws MessagingException {
+		return getNonMatchingHeaderLines(signingIgnoreList);
 	}
 
 	@Override
@@ -138,7 +160,7 @@ public class DkimMessage extends SMTPMessage {
 		out.write(NL);
 	}
 
-	private static byte[] getBytes(String string) {
+	static byte[] getBytes(String string) {
 		char[] chars = string.toCharArray();
 		byte[] bytes = new byte[chars.length];
 

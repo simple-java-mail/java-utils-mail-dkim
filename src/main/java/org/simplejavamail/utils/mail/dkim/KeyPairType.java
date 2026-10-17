@@ -20,13 +20,10 @@ public enum KeyPairType {
    ED25519("ed25519", "EdDSA", SigningAlgorithm.SHA256_WITH_ED25519,
          new SigningAlgorithm[] { SigningAlgorithm.SHA256_WITH_ED25519 }) {
 
-      private boolean initailized;
-
       @Override
       protected void initialize() {
-         if (!initailized) {
+         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
-            initailized = true;
          }
       }
       
