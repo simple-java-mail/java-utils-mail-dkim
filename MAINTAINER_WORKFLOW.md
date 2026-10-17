@@ -128,6 +128,20 @@ mvn -Dtest=DkimMessageTest test
 mvn verify '-Dmaven.javadoc.skip=true' '-Djacoco.skip=true' '-Dlicense.skip=true'
 ```
 
+Surefire starts each test JVM in UTC before Jakarta Mail initializes its cached
+date formatter. The default reverse alphabetical test order initializes MIME
+handling before the golden-message tests. Preserve the startup timezone when
+supplying an optional `argLine`, such as a coverage agent. To check an explicitly
+non-UTC Maven invocation with that order:
+
+```powershell
+mvn test '-Duser.timezone=Europe/Amsterdam' '-Dsurefire.runOrder=reversealphabetical' '-Djacoco.skip=true' '-Dlicense.skip=true'
+```
+
+The inherited OSS Index `audit-dependencies` execution is unbound from the
+Maven lifecycle in this project. Normal verification and release builds do not
+invoke that remote vulnerability scan.
+
 Run the same suite on JDK 21 with the inherited SpotBugs analyzer skipped:
 
 ```powershell

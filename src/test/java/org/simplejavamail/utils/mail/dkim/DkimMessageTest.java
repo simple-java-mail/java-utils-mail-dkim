@@ -20,8 +20,6 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -29,8 +27,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class DkimMessageTest {
-
-	private TimeZone originalTimeZone;
 
 	/**
 	 * create DKIM messages at certain moment, then store those messages as "valid
@@ -68,17 +64,6 @@ public class DkimMessageTest {
 		String folderName = getFolderName(canonicalization, algorithm);
 		byte[] bytes = writeMessage(Utils.getSigner(canonicalization, algorithm), body);
 		Utils.write(new File("./src/test/resources/" + folderName, file.getName()), bytes);
-	}
-
-	@BeforeEach
-	public void fixateSystemTimeZone() {
-		originalTimeZone = TimeZone.getDefault();
-		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-	}
-
-	@AfterEach
-	public void restoreSystemTimeZone() {
-		TimeZone.setDefault(originalTimeZone);
 	}
 
 	private static Stream<Arguments> goldenMessages() throws IOException {

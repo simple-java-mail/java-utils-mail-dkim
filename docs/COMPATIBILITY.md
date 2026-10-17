@@ -18,7 +18,9 @@ the POM and README dependency example remain at `3.3.0`.
 - The default signed-header set and mandatory `From` header remain unchanged.
 - Established golden signed-message contents are retained. Git treats test
   resources as binary so intentional LF, CRLF, and mixed endings survive checkout;
-  tests set and restore the actual default timezone.
+  Surefire starts test JVMs in UTC before Jakarta Mail caches its date formatter.
+  Reverse alphabetical test order initializes MIME handling before the golden
+  tests, retaining a regression control for initialization order.
 - MIME body bytes are preserved when a message is serialized. Configure a signer
   before sharing it; concurrent reconfiguration and concurrent writes of the same
   message are not new supported contracts.

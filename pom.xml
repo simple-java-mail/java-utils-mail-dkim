@@ -22,6 +22,10 @@
 		<automaticModuleName>org.simplejavamail.utils.mail.dkim</automaticModuleName>
 		<!-- Keep default local package/install artifacts free of JaCoCo offline probes. -->
 		<jacoco.skip>true</jacoco.skip>
+		<!-- Preserve optional test JVM arguments when no coverage agent is configured. -->
+		<argLine></argLine>
+		<!-- Initialize Jakarta Mail before the golden-message tests as an order control. -->
+		<surefire.runOrder>reversealphabetical</surefire.runOrder>
 		<!-- license plugin, see possible types here: -->
 		<!-- https://github.com/mathieucarbou/license-maven-plugin/tree/master/license-maven-plugin/src/main/resources/com/mycila/maven/plugin/license/templates -->
 		<license.type>com/mycila/maven/plugin/license/templates/APACHE-2.txt</license.type>
@@ -81,6 +85,26 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- Jakarta Mail caches its date formatter when MimeMessage initializes. -->
+					<argLine>${argLine} -Duser.timezone=UTC</argLine>
+					<runOrder>${surefire.runOrder}</runOrder>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.ossindex.maven</groupId>
+				<artifactId>ossindex-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>audit-dependencies</id>
+						<!-- Remove the inherited remote audit from the build lifecycle. -->
+						<phase>none</phase>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
