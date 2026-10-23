@@ -39,6 +39,8 @@ public final class DomainKey {
 
    private final long timestamp;
 
+   private final boolean legacyProvider;
+
    private final Pattern granularity;
 
    private final KeyPairType keyPairType;
@@ -62,6 +64,11 @@ public final class DomainKey {
    }
 
    DomainKey(Map<Character, String> tags, long timestamp) throws DkimException {
+      this(tags, timestamp, true);
+   }
+
+   DomainKey(Map<Character, String> tags, long timestamp, boolean legacyProvider) throws DkimException {
+      this.legacyProvider = legacyProvider;
       this.timestamp = timestamp;
       this.tags = Collections.unmodifiableMap(tags);
 
@@ -77,7 +84,7 @@ public final class DomainKey {
       this.keyPairType = getPublicKeyType(keyTypeTagValue);
       if (null == keyPairType) {
          throw new DkimException("Incompatible key type k=" + getTagValue('k') + ".");
-      } else {
+      } else if (legacyProvider) {
          keyPairType.initialize();
       }
 
@@ -150,7 +157,8 @@ public final class DomainKey {
    private EdDSAPublicKey getEd25519PublicKey(String publicKeyTagValue) {
       try {
          byte[] keyBytes = decodePublicKeyValue(publicKeyTagValue);
-         KeyFactory keyFactory = KeyFactory.getInstance("Ed25519", "BC");
+         KeyFactory keyFactory = (legacyProvider ? KeyFactory.getInstance("Ed25519", "BC")
+               : KeyFactory.getInstance("Ed25519", DkimCryptoProvider.INSTANCE));
          if (keyBytes.length == 32) {
             // RFC 8463 publishes the raw Ed25519 public key, rather than an
             // X.509 SubjectPublicKeyInfo wrapper. Keep accepting older wrappers.
@@ -307,7 +315,8 @@ public final class DomainKey {
 
    private Signature getSignature(SigningAlgorithm algorithm) throws NoSuchAlgorithmException, NoSuchProviderException {
       return keyPairType == KeyPairType.ED25519
-            ? Signature.getInstance(algorithm.getJavaNotation(), "BC")
+            ? (legacyProvider ? Signature.getInstance(algorithm.getJavaNotation(), "BC")
+                  : Signature.getInstance(algorithm.getJavaNotation(), DkimCryptoProvider.INSTANCE))
             : Signature.getInstance(algorithm.getJavaNotation());
    }
 

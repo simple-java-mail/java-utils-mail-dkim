@@ -6,6 +6,11 @@ with the preceding `3.3.0` release.
 
 ## Preserved contracts
 
+An [additive provider-neutral signing API](PROVIDER_NEUTRAL_SIGNING.md) was accepted on 23 October 2026 under
+[#28](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/28). Version 3.4.0 preserves the legacy
+contracts below, including Angus transitivity and subclass hooks, while allowing the new entry point to run without Angus.
+This accepted design does not change what is available in published 3.3.1.
+
 - Public and protected constructors and methods, enum constants, and package
   names remain available. No new application API is required.
 - Java 8 source and bytecode compatibility, dependency versions, and automatic

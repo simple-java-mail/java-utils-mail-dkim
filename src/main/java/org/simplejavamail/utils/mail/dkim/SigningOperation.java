@@ -16,6 +16,10 @@ final class SigningOperation {
    private final Signature signature;
 
    SigningOperation(KeyPairType keyType, SigningAlgorithm algorithm, PrivateKey key) {
+      this(keyType, algorithm, key, true);
+   }
+
+   SigningOperation(KeyPairType keyType, SigningAlgorithm algorithm, PrivateKey key, boolean legacy) {
       this.algorithm = algorithm;
       try {
          digest = MessageDigest.getInstance(algorithm.getHashNotation());
@@ -24,8 +28,12 @@ final class SigningOperation {
       }
       try {
          if (keyType == KeyPairType.ED25519) {
-            keyType.initialize();
-            signature = Signature.getInstance(algorithm.getJavaNotation(), "BC");
+            if (legacy) {
+               keyType.initialize();
+               signature = Signature.getInstance(algorithm.getJavaNotation(), "BC");
+            } else {
+               signature = Signature.getInstance(algorithm.getJavaNotation(), DkimCryptoProvider.INSTANCE);
+            }
          } else {
             signature = Signature.getInstance(algorithm.getJavaNotation());
          }

@@ -14,6 +14,8 @@ import java.util.function.LongSupplier;
 public final class DomainKeyUtil {
 
    private static final Map<String, DomainKey> CACHE = new HashMap<String, DomainKey>();
+   // Separate provider contexts retain legacy initialization while sharing DNS policy and locking.
+   private static final Map<String, DomainKey> BYTE_SIGNING_CACHE = new HashMap<String, DomainKey>();
 
    private static final DnsTxtRecordLookup DNS_LOOKUP = new DnsTxtRecordLookup();
 
@@ -60,6 +62,7 @@ public final class DomainKeyUtil {
       if (cacheTtl == 0) {
          cacheGeneration++;
          CACHE.clear();
+         BYTE_SIGNING_CACHE.clear();
       }
    }
 
@@ -91,6 +94,7 @@ public final class DomainKeyUtil {
       cacheGeneration++;
       lastCleanupTimestamp = 0;
       CACHE.clear();
+      BYTE_SIGNING_CACHE.clear();
    }
 
    /**
@@ -112,7 +116,17 @@ public final class DomainKeyUtil {
       return getDomainKey(recordName, lookup, System::currentTimeMillis);
    }
 
+   static DomainKey getDomainKeyForByteSigning(String signingDomain, String selector) throws DkimException {
+      return getDomainKey(getRecordName(signingDomain, selector), DNS_LOOKUP, System::currentTimeMillis, false);
+   }
+
    static DomainKey getDomainKey(String recordName, DnsTxtRecordLookup lookup, LongSupplier clock) throws DkimException {
+      return getDomainKey(recordName, lookup, clock, true);
+   }
+
+   private static DomainKey getDomainKey(String recordName, DnsTxtRecordLookup lookup, LongSupplier clock,
+                                       boolean legacyProvider) throws DkimException {
+      Map<String, DomainKey> cache = legacyProvider ? CACHE : BYTE_SIGNING_CACHE;
       Object lookupLock = LOOKUP_LOCKS[(recordName.hashCode() & Integer.MAX_VALUE) % LOOKUP_LOCKS.length];
       synchronized (lookupLock) {
          long generation;
@@ -125,20 +139,20 @@ public final class DomainKeyUtil {
                removeExpiredKeys(now);
                lastCleanupTimestamp = now;
             }
-            DomainKey cached = CACHE.get(recordName);
+            DomainKey cached = cache.get(recordName);
             if (cached != null && cacheTtl != 0 && isRecent(cached, now)) {
                return cached;
             }
-            CACHE.remove(recordName);
+            cache.remove(recordName);
             generation = cacheGeneration;
             environment = getEnvironment();
          }
 
          DomainKey domainKey = new DomainKey(DomainKeyRecord.parseTags(lookup.lookup(recordName, environment), recordName),
-               clock.getAsLong());
+               clock.getAsLong(), legacyProvider);
          synchronized (DomainKeyUtil.class) {
             if (generation == cacheGeneration && cacheTtl != 0) {
-               CACHE.put(recordName, domainKey);
+               cache.put(recordName, domainKey);
             }
          }
          return domainKey;
@@ -150,7 +164,12 @@ public final class DomainKeyUtil {
    }
 
    private static void removeExpiredKeys(long now) {
-      Iterator<DomainKey> keys = CACHE.values().iterator();
+      removeExpiredKeys(CACHE, now);
+      removeExpiredKeys(BYTE_SIGNING_CACHE, now);
+   }
+
+   private static void removeExpiredKeys(Map<String, DomainKey> cache, long now) {
+      Iterator<DomainKey> keys = cache.values().iterator();
       while (keys.hasNext()) {
          DomainKey key = keys.next();
          if (cacheTtl == 0 || !isRecent(key, now)) {

@@ -102,6 +102,15 @@ public final class LegacyClient {
         require(wire.endsWith("\r\n\r\nLegacy body\r\n"), "MIME body output");
         require(wire.contains("From: compat@example.com\r\n"), "Mandatory From remains signed and emitted");
         String checksum = Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(output.toByteArray()));
+        DkimMessage customBody = new DkimMessage(original, signer) {
+            @Override protected String getEncodedBody() { return "hook body\r\n"; }
+        };
+        ByteArrayOutputStream customOutput = new ByteArrayOutputStream();
+        customBody.writeTo(customOutput);
+        String expectedHash = Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256")
+                .digest("hook body\r\n".getBytes(StandardCharsets.US_ASCII)));
+        require(new String(customOutput.toByteArray(), StandardCharsets.US_ASCII).contains("bh=" + expectedHash + ";"),
+                "Protected body customization affects signing input");
         System.out.println("Legacy compatibility client passed; message SHA-256=" + checksum);
     }
 

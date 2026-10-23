@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.4.0 (23 October 2026)
+
+- [#28](https://github.com/simple-java-mail/java-utils-mail-dkim/issues/28): add immutable `DkimByteSigner` configuration and signing of finalized MIME bytes without Angus or global cryptographic-provider registration, including DNS key checks. The original message bytes remain intact after the new DKIM header.
+- The new and legacy entry points share one signing engine. Existing public/protected APIs, `DkimMessage` inheritance and customization hooks, signing defaults, dependency transitivity, working message output and Java 8 remain supported without caller migration.
+
 ## 3.3.1 (17 October 2026)
 
 - Existing public and protected APIs, signing defaults, Java 8 compatibility, and dependency versions remain unchanged. Callers need no migration. Previously incorrect signatures change for the affected inputs; see [compatibility boundaries](docs/COMPATIBILITY.md).

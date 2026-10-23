@@ -4,7 +4,7 @@
 
 # utils-mail-dkim
 
-DKIM signing and sending-domain key validation for Jakarta Mail and Angus Mail. Configure a signer, wrap a `MimeMessage`, and send it through your existing Jakarta Mail transport.
+DKIM signing and sending-domain key validation. Sign finalized MIME bytes, or use the existing Jakarta Mail/Angus message wrapper with your transport.
 
 - Sign MIME messages with RSA-SHA256 and configurable signing algorithms.
 - Configure simple or relaxed canonicalization independently for headers and body.
@@ -21,15 +21,46 @@ This library signs outgoing messages and checks domain-key records. It does not 
 <dependency>
     <groupId>org.simplejavamail</groupId>
     <artifactId>utils-mail-dkim</artifactId>
-    <version>3.3.1</version>
+    <version>3.4.0</version>
 </dependency>
 ```
 
 The library targets Java 8 and uses `jakarta.mail` APIs. Its dependencies include Jakarta Mail API, Angus Mail, and Bouncy Castle. For JPMS applications, the JAR declares the automatic module name `org.simplejavamail.utils.mail.dkim`.
 
-`3.3.1` is a patch release with no caller migration. See the [release notes](CHANGELOG.md#331-17-october-2026) for the corrected signing and DNS behavior.
+`3.4.0` adds finalized-byte signing while preserving existing callers. See the [release notes](CHANGELOG.md#340-23-october-2026).
 
 ## Quick start
+
+### Finalized MIME bytes
+
+`DkimByteSigner` adds a provider-neutral entry point. It prepends a DKIM header without rebuilding MIME or changing any input byte.
+The example uses a JDK `PrivateKey` and the matching DNS record; header canonicalization defaults to relaxed and body canonicalization to simple.
+This additive API is available from 3.4.0; the existing message-wrapper API remains supported.
+
+```java
+import org.simplejavamail.utils.mail.dkim.Canonicalization;
+import org.simplejavamail.utils.mail.dkim.DkimByteSigner;
+
+DkimByteSigner signer = DkimByteSigner.builder()
+    .signingDomain("example.com")
+    .selector("mail")
+    .privateKey(privateKey)
+    .bodyCanonicalization(Canonicalization.RELAXED)
+    .identity("sender@example.com")
+    .build();
+
+byte[] signedMessage = signer.sign(finalizedMessageBytes);
+```
+
+Finish MIME construction and encoding before signing, and preserve the result during submission. The immutable signer supports concurrent calls;
+each call owns its cryptographic state and returned array. The builder validates configuration/key compatibility at `build()` and DNS is checked
+when signing. Configure `signingAlgorithm(SigningAlgorithm.SHA256_WITH_ED25519)` explicitly for an Ed25519 private key.
+
+The byte-signing path runs without Angus and never registers a JVM-global cryptographic provider, including during Ed25519 DNS handling.
+Legacy `DkimMessage` callers retain Angus transitively. Applications using only the new entry point can exclude `org.eclipse.angus:angus-mail`;
+the Jakarta Mail API and other declared dependencies remain required. See the [feature contract](docs/PROVIDER_NEUTRAL_SIGNING.md).
+
+### Existing message wrapper
 
 Use your existing SMTP `Session` and an RSA private key in **unencrypted PKCS#8 DER** format. Publish the matching public key at `mail._domainkey.example.com` before sending.
 

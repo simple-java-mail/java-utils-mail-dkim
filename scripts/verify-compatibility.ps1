@@ -79,15 +79,28 @@ try {
     $candidateApi | Set-Content -LiteralPath (Join-Path $outputDirectory 'candidate-api.txt') -Encoding UTF8
     # Method-level synchronized is an implementation modifier, not a source or
     # binary API member. DNS lookup locking deliberately moved inside the method.
-    $baselineDeclarations = @($baselineApi | Where-Object { $_ -match '^\s*(public|protected) ' } |
-        ForEach-Object { $_.Trim().Replace('synchronized ', '') } | Sort-Object)
-    $candidateDeclarations = @($candidateApi | Where-Object { $_ -match '^\s*(public|protected) ' } |
-        ForEach-Object { $_.Trim().Replace('synchronized ', '') } | Sort-Object)
-    $apiChanges = @(Compare-Object $baselineDeclarations $candidateDeclarations)
-    if ($apiChanges.Count -ne 0) {
-        $apiChanges | Format-Table | Out-String | Write-Host
-        throw "Public/protected API declarations differ; inspect $outputDirectory"
+    function Get-OwnerQualifiedDeclarations([object[]] $Api) {
+        $owner = ''
+        foreach ($line in $Api) {
+            if ($line -match '^(public|protected) .*\{$') { $owner = $line.Trim() }
+            if ($line -match '^\s*(public|protected) ') {
+                $owner + ' :: ' + $line.Trim().Replace('synchronized ', '')
+            }
+        }
     }
+    $baselineDeclarations = @(Get-OwnerQualifiedDeclarations $baselineApi | Sort-Object)
+    $candidateDeclarations = @(Get-OwnerQualifiedDeclarations $candidateApi | Sort-Object)
+    $apiChanges = @(Compare-Object $baselineDeclarations $candidateDeclarations)
+    $removedDeclarations = @($apiChanges | Where-Object SideIndicator -eq '<=')
+    if ($removedDeclarations.Count -ne 0) {
+        $removedDeclarations | Format-Table | Out-String | Write-Host
+        throw "Existing public/protected API declarations changed; inspect $outputDirectory"
+    }
+    # Additive types have their own inventory; they never substitute for an old owner's members.
+    $additiveTypes = @('org.simplejavamail.utils.mail.dkim.DkimByteSigner',
+        'org.simplejavamail.utils.mail.dkim.DkimByteSigner$Builder')
+    $additiveApi = @(Invoke-Checked $javap8 (@('-protected', '-classpath', $candidateClasspath) + $additiveTypes))
+    $additiveApi | Set-Content -LiteralPath (Join-Path $outputDirectory 'additive-api.txt') -Encoding UTF8
 
     $legacyClasses = New-Item -ItemType Directory -Path (Join-Path $outputDirectory 'legacy-classes')
     $candidateClasses8 = New-Item -ItemType Directory -Path (Join-Path $outputDirectory 'candidate-source-java8')
